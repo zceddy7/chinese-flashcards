@@ -76,5 +76,10 @@ Only needed if you want to change the deck. `tools/` holds the scripts; see
 
 ## Licence
 
-App code: [MIT](LICENSE). The bundled deck data keeps its upstream licences (CC-BY-SA 4.0 and
-CC-BY 2.0 FR) — see [NOTICE.md](NOTICE.md) before redistributing.
+App code: [MIT](LICENSE).
+
+> [!IMPORTANT]
+> **The deck data embedded in `index.html` is not MIT.** The word definitions derive from
+> CC-CEDICT (**CC-BY-SA 4.0** — ShareAlike) and the phrases from Tatoeba (**CC-BY 2.0 FR**).
+> Both require attribution, and ShareAlike carries over to modified versions of the data.
+> Read [NOTICE.md](NOTICE.md) before redistributing.
