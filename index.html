@@ -115,13 +115,39 @@
     position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
     font-size: 11px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase;
   }
-  .speak {
-    position: absolute; top: 12px; right: 12px;
+  /* ---- Audio controls ---- */
+  .audio-ctl { display: flex; gap: 6px; }
+  .audio-ctl button {
     background: none; border: 1px solid var(--line); border-radius: 8px;
-    width: 36px; height: 36px; cursor: pointer; color: var(--muted);
-    font-size: 16px; line-height: 1; flex: 0 0 auto;
+    padding: 0; cursor: pointer; color: var(--muted); line-height: 1; flex: 0 0 auto;
   }
-  .speak:hover { color: var(--ink); border-color: var(--muted); }
+  .audio-ctl button:hover { color: var(--ink); border-color: var(--muted); }
+  .audio-ctl button:active { transform: translateY(1px); }
+  /* Corner: a text card that happens to have audio. */
+  .audio-ctl.corner { position: absolute; top: 12px; right: 12px; }
+  .audio-ctl.corner button { width: 36px; height: 36px; font-size: 15px; }
+  /* Centre: the listening card, where audio IS the question. */
+  .audio-ctl.centre { position: static; justify-content: center; margin-top: 18px; }
+  .audio-ctl.centre button {
+    width: 64px; height: 56px; font-size: 24px;
+    background: var(--bg);
+  }
+  .audio-ctl.centre button#play-normal {
+    width: 96px;
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    color: var(--accent);
+  }
+  .listen-mark { font-size: clamp(52px, 13vw, 76px); opacity: .25; line-height: 1; }
+
+  .hint-line {
+    margin-top: 14px; font-size: 22px; color: var(--accent); opacity: .85;
+  }
+  .hint-line::before {
+    content: "hint · "; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .hint-row { display: flex; justify-content: center; margin-top: 12px; }
+  .hint-row button { padding: 8px 14px; font-size: 13px; color: var(--muted); }
 
   /* ---- Buttons ---- */
   button {
@@ -265,9 +291,21 @@
     <div class="card" id="card">
       <div class="box-tag" id="box-tag"></div>
       <div class="field-tag" id="field-tag"></div>
-      <button class="speak hidden" id="speak" title="Play pronunciation">🔊</button>
 
       <div class="prompt" id="prompt"></div>
+      <div class="listen-mark hidden" id="listen-mark" aria-hidden="true">🎧</div>
+
+      <!-- Playback: sits in the corner on text cards, front and centre on
+           listening cards. Same buttons either way. Ordered after the headphone
+           mark so the centred layout reads top-down; corner mode is absolute,
+           so DOM order doesn't affect it. -->
+      <div class="audio-ctl hidden" id="audio-ctl">
+        <button id="play-normal" title="Play">🔊</button>
+        <button id="play-slow" title="Slow (60%)">🐢</button>
+        <button id="play-slower" title="Slower (40%)">🐌</button>
+      </div>
+
+      <div class="hint-line hidden" id="hint-line"></div>
 
       <div class="answer hidden" id="answer">
         <div class="zh a-line a-hanzi hidden" id="a-hanzi" lang="zh-Hans"></div>
@@ -276,6 +314,9 @@
       </div>
 
       <div class="ask-label" id="ask-label"></div>
+    </div>
+    <div class="hint-row hidden" id="hint-row">
+      <button id="btn-hint">💡 Hint: show pinyin</button>
     </div>
 
     <!-- Typing mode -->
@@ -349,6 +390,9 @@
         <button class="chip" data-dir="pinyin>hanzi">Pinyin → <span lang="zh-Hans">汉字</span></button>
         <button class="chip" data-dir="pinyin>english">Pinyin → English</button>
         <button class="chip" data-dir="english>pinyin">English → Pinyin</button>
+        <button class="chip" data-dir="audio>english">🎧 Listen → English</button>
+        <button class="chip" data-dir="audio>pinyin">🎧 Listen → Pinyin</button>
+        <button class="chip" data-dir="audio>hanzi">🎧 Listen → <span lang="zh-Hans">汉字</span></button>
       </div>
     </div>
     <div class="setting-hint" id="dir-hint"></div>
@@ -10892,8 +10936,13 @@ const PHRASES = [
 
 const KEY = "chinese-flashcards-v1";
 const DECK_VERSION = 2;   // bump to merge new built-in cards into existing saves
+// Fields a card actually stores.
 const FIELDS = ["hanzi", "pinyin", "english"];
-const LABEL = { hanzi: "汉字", pinyin: "pinyin", english: "English" };
+// "audio" is a pseudo-field: it can be the question (hear it, recall the rest)
+// but never the answer — you can't type a sound. It speaks the card's hanzi.
+const LABEL = { hanzi: "汉字", pinyin: "pinyin", english: "English", audio: "listen" };
+// Playback rates: normal, then the two slow-down steps.
+const RATE_NORMAL = 0.85, RATE_SLOW = 0.6, RATE_SLOWER = 0.4;
 const DAY = 86400000;
 
 // Each direction is mastered after this many correct answers in a row.
@@ -10913,6 +10962,8 @@ const DIR_LIST = [
   ["hanzi", "english"], ["english", "hanzi"],
   ["hanzi", "pinyin"],  ["pinyin", "hanzi"],
   ["pinyin", "english"], ["english", "pinyin"],
+  // Listening: audio only ever appears on the left.
+  ["audio", "english"], ["audio", "pinyin"], ["audio", "hanzi"],
 ];
 
 // Display names + grouping for the category chips.
@@ -10959,8 +11010,12 @@ const DEFAULTS = {
     "hanzi>english": true,  "english>hanzi": true,
     "hanzi>pinyin": true,   "pinyin>hanzi": false,
     "pinyin>english": false, "english>pinyin": true,
+    "audio>english": true,  "audio>pinyin": true, "audio>hanzi": false,
   },
 };
+
+// No speech engine means listening cards can't work; they're filtered out.
+const CAN_SPEAK = typeof window !== "undefined" && !!window.speechSynthesis;
 
 let state = load();
 let queue = [];
@@ -10970,6 +11025,7 @@ let promptField = null;  // the question field
 let targetField = null;  // the field being recalled/typed — graded on its own
 let revealed = false;
 let answered = false;
+let hintShown = false;   // pinyin hint, reset per card
 
 // ---- Storage ----
 function pairKey(pf, af) { return pf + ">" + af; }
@@ -11109,8 +11165,12 @@ function applyCats() {
 function catOk(card) { return (card.c & catMask) !== 0; }
 function cardOk(card) { return kindOk(card) && catOk(card); }
 function catsOf(card) { return CAT_ORDER.filter(c => card.c & CAT_BIT[c]); }
+// An audio question speaks the hanzi, so it needs hanzi even though "audio"
+// isn't a stored field. Without speech support there's nothing to hear at all.
 function hasFields(card, pf, af) {
-  return !!(card[pf] && card[pf].trim() && card[af] && card[af].trim());
+  const src = pf === "audio" ? "hanzi" : pf;
+  if (pf === "audio" && !CAN_SPEAK) return false;
+  return !!(card[src] && card[src].trim() && card[af] && card[af].trim());
 }
 
 // Every direction allowed by the current settings, mastered or not. A card only
@@ -11181,6 +11241,7 @@ function next() {
   targetField = unit ? unit.af : null;
   revealed = false;
   answered = false;
+  hintShown = false;
 
   const inp = document.getElementById("type-input");
   inp.value = "";
@@ -11189,6 +11250,8 @@ function next() {
   v.textContent = ""; v.className = "verdict";
   render();
   if (unit && state.mode === "type") inp.focus();
+  // On a listening card the audio is the question, so play it straight away.
+  if (unit && promptField === "audio") speak(RATE_NORMAL);
 }
 
 // Long sentences can't use the single-character display size.
@@ -11228,12 +11291,17 @@ function render() {
   study.classList.remove("hidden");
   done.classList.add("hidden");
 
-  // --- Prompt: exactly one field ---
+  // --- Prompt: exactly one field (or the audio player) ---
+  const listening = promptField === "audio";
   const promptEl = document.getElementById("prompt");
-  promptEl.textContent = current[promptField];
-  promptEl.className = "prompt f-" + promptField + (promptField === "hanzi" ? " zh" : "");
-  promptEl.lang = promptField === "hanzi" ? "zh-Hans" : "en";
-  fitZh(promptEl, current[promptField]);
+  promptEl.classList.toggle("hidden", listening);
+  document.getElementById("listen-mark").classList.toggle("hidden", !listening);
+  if (!listening) {
+    promptEl.textContent = current[promptField];
+    promptEl.className = "prompt f-" + promptField + (promptField === "hanzi" ? " zh" : "");
+    promptEl.lang = promptField === "hanzi" ? "zh-Hans" : "en";
+    fitZh(promptEl, current[promptField]);
+  }
 
   // Read-only: merely showing a card must not create a progress record, or it
   // would count as "due" without ever being answered.
@@ -11270,20 +11338,34 @@ function render() {
   document.getElementById("tone-note").classList.toggle("hidden", !showTones);
 
   const askLabel = document.getElementById("ask-label");
+  const heard = listening ? "Listen — " : "";
   if (typing) {
-    askLabel.innerHTML = answered ? "press Enter for the next card" : `Type the <b>${LABEL[targetField]}</b>`;
+    askLabel.innerHTML = answered ? "press Enter for the next card" : `${heard}type the <b>${LABEL[targetField]}</b>`;
   } else {
     askLabel.innerHTML = revealed
       ? `Did you recall the <b>${LABEL[targetField]}</b>?`
-      : `Recall the <b>${LABEL[targetField]}</b> — click or press space`;
+      : `${heard}recall the <b>${LABEL[targetField]}</b> — click or press space`;
   }
 
   // Audio needs characters to speak. Any card already showing hanzi or pinyin
   // can play it — the sound is what's on screen, so nothing is given away. When
   // English is the question, the sound would be the answer, so wait for reveal.
+  // On a listening card the audio IS the question, so it's always available.
   const promptIsChinese = promptField === "hanzi" || promptField === "pinyin";
-  const canSpeak = !!current.hanzi && (promptIsChinese || revealed);
-  document.getElementById("speak").classList.toggle("hidden", !canSpeak);
+  const canPlay = CAN_SPEAK && !!current.hanzi && (listening || promptIsChinese || revealed);
+  const ctl = document.getElementById("audio-ctl");
+  ctl.classList.toggle("hidden", !canPlay);
+  ctl.classList.toggle("centre", listening);
+  ctl.classList.toggle("corner", !listening);
+
+  // The hint shows the pinyin — so it's pointless when pinyin is already the
+  // question, and cheating when pinyin is the answer being asked for.
+  const hintable = !!current.pinyin && promptField !== "pinyin"
+    && targetField !== "pinyin" && !revealed;
+  document.getElementById("hint-row").classList.toggle("hidden", !hintable);
+  const hintLine = document.getElementById("hint-line");
+  hintLine.classList.toggle("hidden", !(hintShown && hintable));
+  if (hintShown && hintable) hintLine.textContent = current.pinyin;
 }
 
 // ---- Answer checking ----
@@ -11381,11 +11463,11 @@ function submitAnswer() {
   speak();
 }
 
-function speak() {
-  if (!current || !current.hanzi || !window.speechSynthesis) return;
+function speak(rate) {
+  if (!current || !current.hanzi || !CAN_SPEAK) return;
   const u = new SpeechSynthesisUtterance(current.hanzi);
   u.lang = "zh-CN";
-  u.rate = 0.85;
+  u.rate = rate || RATE_NORMAL;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
@@ -11446,7 +11528,16 @@ buildToneBar(document.getElementById("add-tone-bar"), document.getElementById("i
 
 // ---- Card events ----
 document.getElementById("card").addEventListener("click", reveal);
-document.getElementById("speak").addEventListener("click", e => { e.stopPropagation(); speak(); });
+[["play-normal", RATE_NORMAL], ["play-slow", RATE_SLOW], ["play-slower", RATE_SLOWER]]
+  .forEach(([id, rate]) => document.getElementById(id).addEventListener("click", e => {
+    e.stopPropagation();          // don't flip the card when scrubbing audio
+    speak(rate);
+  }));
+document.getElementById("btn-hint").addEventListener("click", e => {
+  e.stopPropagation();
+  hintShown = true;
+  render();
+});
 document.getElementById("btn-again").addEventListener("click", e => { e.stopPropagation(); grade(false); });
 document.getElementById("btn-good").addEventListener("click", e => { e.stopPropagation(); grade(true); });
 document.getElementById("btn-check").addEventListener("click", submitAnswer);
@@ -11503,6 +11594,7 @@ function renderSettings() {
   if (state.mode === "type" && DIR_LIST.some(([pf, af]) => af === "hanzi" && state.dirs[pairKey(pf, af)])) {
     hint += " Typing 汉字 needs a Chinese keyboard — turn the → 汉字 directions off to skip those.";
   }
+  if (!CAN_SPEAK) hint += " 🎧 Listening needs browser speech, which this browser doesn't offer.";
   document.getElementById("dir-hint").textContent = hint;
 
   const warn = document.getElementById("settings-warn");

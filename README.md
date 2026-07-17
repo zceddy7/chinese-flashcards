@@ -15,11 +15,16 @@ vocabulary you actually need comes up before the rare stuff.
 
 - **Two answer modes.** *Tapping* — flip the card and grade yourself. *Typing* — type the answer
   and have it checked.
+- **Listening cards.** 🎧 The card plays the audio and nothing else — recall the English, the
+  pinyin, or the characters from sound alone. Two slow-down buttons (**60%** and **40%**) for when
+  it goes past too fast.
+- **Hint button.** Reveals the pinyin without giving the answer away. It hides itself whenever the
+  pinyin *is* the answer being asked for.
 - **Per-direction mastery.** Progress is tracked for each *direction* separately, not per card.
-  你好 is six skills: 汉字→English, English→汉字, 汉字→pinyin, pinyin→汉字, pinyin→English,
-  English→pinyin. Recognising a word doesn't mean you can produce it, so each direction needs its
-  own five correct answers before it retires to the **Got it pile**.
-- **Pick your directions.** Study only pinyin→English, or only English→汉字, or any mix.
+  你好 is nine skills: 汉字→English, English→汉字, 汉字→pinyin, pinyin→汉字, pinyin→English,
+  English→pinyin, and three listening ones. Recognising a word doesn't mean you can produce it, so
+  each direction needs its own five correct answers before it retires to the **Got it pile**.
+- **Pick your directions.** Study only pinyin→English, or only 🎧→English, or any mix.
 - **Categories.** 16 topics (food, travel, feelings, …), 11 word types (verbs, conjunctions,
   measure words, …), plus Misc. Multi-select, and cards can belong to several — 吃饭 is *food*,
   *home* and a *verb*.
@@ -29,7 +34,8 @@ vocabulary you actually need comes up before the rare stuff.
 - **Forgiving answer checking.** Tones are partial credit (`hong` for `hóng` counts, with a nudge);
   case and spacing are ignored; a card glossed "he / him" accepts `he`, `him`, or the whole thing.
 - **Audio.** Chinese text-to-speech on any card showing hanzi or pinyin — never on a card where
-  hearing it would give away the answer.
+  hearing it would give away the answer. Uses the browser's own speech engine, so it needs a
+  Chinese voice installed; listening cards disappear if the browser has no speech at all.
 - **Character style.** Microsoft YaHei (how characters look in phone messaging) or SimSun (print).
 - **Add your own.** One at a time, or paste a whole list — tab / `|` / `;` / comma separated, with
   a live preview and duplicate detection.
