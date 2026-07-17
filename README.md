@@ -20,10 +20,20 @@ vocabulary you actually need comes up before the rare stuff.
   it goes past too fast.
 - **Hint button.** Reveals the pinyin without giving the answer away. It hides itself whenever the
   pinyin *is* the answer being asked for.
-- **Per-direction mastery.** Progress is tracked for each *direction* separately, not per card.
-  你好 is nine skills: 汉字→English, English→汉字, 汉字→pinyin, pinyin→汉字, pinyin→English,
-  English→pinyin, and three listening ones. Recognising a word doesn't mean you can produce it, so
-  each direction needs its own five correct answers before it retires to the **Got it pile**.
+- **A small rotation, not the whole deck.** Only ~20 items are in play at once, so the deck feels
+  learnable instead of endless. Get one right **5 times in a row** and it graduates to the **Got it
+  pile**, and the next (most-common-first) drops into its slot. A miss resets it to 0. Adjust the
+  size under *Study settings → In rotation*.
+- **Each direction stands alone.** 你好→hello and hello→你好 are separate items with separate
+  progress — recognising a word isn't the same as producing it. So the rotation is 20 *directions*
+  (drawn from the directions you turn on: 汉字→English, English→汉字, 汉字→pinyin, pinyin→汉字,
+  pinyin→English, English→pinyin, and three listening ones), and each graduates on its own.
+- **Skip and reshuffle.** *Skip* parks the current item and moves on, no change to progress.
+  *Reshuffle card* sends the current one back into the big pile and pulls a fresh one; *New 20*
+  sends the whole on-deck set back and grabs 20 new items.
+- **Noun pictures.** Concrete nouns show a cartoon illustration — 🍎 for 苹果, 🐟 for 鱼 — so the
+  object attaches to the characters and pinyin, not to an English word. The picture only appears
+  when it can't give the answer away (when English is the prompt, or after you reveal).
 - **Pick your directions.** Study only pinyin→English, or only 🎧→English, or any mix.
 - **Categories.** 16 topics (food, travel, feelings, …), 11 word types (verbs, conjunctions,
   measure words, …), plus Misc. Multi-select, and cards can belong to several — 吃饭 is *food*,
@@ -48,6 +58,7 @@ vocabulary you actually need comes up before the rare stuff.
 | `1` / `2` | Again / Got it |
 | `Enter` | check a typed answer, then advance |
 | `s` | replay audio |
+| `k` | skip this item |
 
 ## Where the data comes from
 
@@ -63,6 +74,8 @@ Nothing here was written from memory — for a language app a wrong tone is wors
   readings so a word reads the same on a phrase card as on its own card.
 - **44 curated essentials** — HSK word lists don't contain 你好 (they treat it as 你 + 好), so
   greetings and everyday expressions were added by hand and tone-checked.
+- **Noun illustrations** — cartoon SVGs from [OpenMoji](https://openmoji.org) (CC BY-SA 4.0),
+  embedded at build time for concrete nouns.
 
 See [NOTICE.md](NOTICE.md) for licences and attribution.
 
@@ -86,6 +99,6 @@ App code: [MIT](LICENSE).
 
 > [!IMPORTANT]
 > **The deck data embedded in `index.html` is not MIT.** The word definitions derive from
-> CC-CEDICT (**CC-BY-SA 4.0** — ShareAlike) and the phrases from Tatoeba (**CC-BY 2.0 FR**).
-> Both require attribution, and ShareAlike carries over to modified versions of the data.
-> Read [NOTICE.md](NOTICE.md) before redistributing.
+> CC-CEDICT (**CC-BY-SA 4.0** — ShareAlike), the phrases from Tatoeba (**CC-BY 2.0 FR**), and the
+> noun illustrations from OpenMoji (**CC-BY-SA 4.0**). All require attribution, and ShareAlike
+> carries over to modified versions. Read [NOTICE.md](NOTICE.md) before redistributing.

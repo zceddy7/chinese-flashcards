@@ -1,6 +1,7 @@
 # Build intermediates — regenerate with tools/ (see tools/README.md)
 tools/*.json
 tools/__pycache__/
+tools/_img_cache/
 *.tsv
 *.bz2
 *.zip

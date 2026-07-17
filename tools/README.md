@@ -30,7 +30,16 @@ python build_phrases.py 3000   # -> phrases.json     Tatoeba, HSK-only vocabular
 python build_supplement.py     # -> supplement.json  essentials HSK omits (你好, …)
 python build_categories.py     # -> cats.json        topics + word types
 python inject.py               # rewrites ../index.html
+python build_images.py         # embeds noun illustrations into ../index.html
 ```
+
+`build_images.py` is independent of the deck build — it reads the hanzi already
+baked into `index.html`, downloads the matching OpenMoji SVGs (CC BY-SA 4.0),
+strips their ids, and writes an `IMAGES` map between the `IMAGES-START` /
+`IMAGES-END` markers. Re-runs replace the block; downloads are cached under
+`tools/_img_cache/` so repeat runs are offline. Add a noun by putting a
+`hanzi -> codepoint` line in its `NOUN_EMOJI` map and re-running. It needs
+network access only the first time each image is fetched.
 
 ## Notes on the tricky bits
 

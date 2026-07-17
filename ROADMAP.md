@@ -17,7 +17,13 @@ way to move progress between machines.
 **Watch for:** restoring an older backup shouldn't drop newer built-in cards — run it through
 `mergeBuiltIn()` rather than replacing `state.cards` wholesale.
 
-## 2. Daily new-card limit + a session finish line
+## 2. Daily new-card limit + a session finish line  ← largely handled
+
+**Update:** the **~20-item rotation** now does most of this. Only ~20 *directions* are ever in play;
+each graduates after 5 correct in a row and the next by frequency takes its slot, so the header shows
+`20 in rotation · N got it · M to go` and the "to go" count actually drops. What's *not* done: a
+per-day cap or a midnight reset — the rotation is continuous, not day-scoped. See `ROTATION_SIZE`,
+`refillRotation()`, `poolUnits()` and the `unitKey`/`benched` machinery in `index.html`.
 
 **Why:** the header reads "62,700 new" and never visibly drops. It's demotivating and it's an
 artefact of how the deck was scaled up. Every real SRS caps new cards per day (Anki defaults to 20).
@@ -28,6 +34,10 @@ at `NEW_BATCH = 40` — that's the hook. Then show "20 new + 45 reviews left tod
 screen when the day's goal is met, instead of only when the entire deck is exhausted.
 
 ## 3. Mastered shouldn't be permanent
+
+**Note:** graduation is **per-direction** — a direction retires after 5 correct in a row (a miss
+resets it), and the 20-item rotation is made of directions. The resurface-at-60/180-days idea below
+still applies: retired directions leave for good until you return them by hand from the Got it pile.
 
 **Why:** five in a row retires a direction forever (`MASTER_AT = 5`, then it leaves the queue). But
 you will forget 商店 in six months and the app can never find out. This was an explicit request, so

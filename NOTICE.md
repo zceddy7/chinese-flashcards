@@ -43,7 +43,20 @@ simplified characters. Attribution to Tatoeba and its contributors is required.
 
 Used at build time only; no part of them ships in `index.html`.
 
-## 4. Curated essentials
+## 4. Noun illustrations — CC BY-SA 4.0
+
+> **OpenMoji** — <https://openmoji.org>
+> The open-source emoji and icon project, licensed under
+> Creative Commons Attribution-ShareAlike 4.0 International
+> (<https://creativecommons.org/licenses/by-sa/4.0/>).
+
+The cartoon illustrations shown on concrete-noun cards (the `IMAGES` map in
+`index.html`) are OpenMoji colour SVGs, embedded at build time by
+`tools/build_images.py`. Because OpenMoji is **ShareAlike**, these images — and any
+modified version — must stay under CC BY-SA 4.0 with attribution to OpenMoji. That
+applies to the embedded art, not to the app code around it.
+
+## 5. Curated essentials
 
 The 44 everyday expressions listed in `tools/build_supplement.py` (你好, 早上好, 多少钱, …) were
 written for this project and are covered by the MIT licence above. HSK word lists omit them
@@ -58,4 +71,5 @@ because they parse as compounds.
 | App code (`index.html` markup/CSS/JS, `tools/*.py`) | MIT |
 | Word definitions + pinyin in the deck | CC-BY-SA 4.0 (CC-CEDICT) |
 | Phrase sentences + translations | CC-BY 2.0 FR (Tatoeba) |
+| Noun illustrations (`IMAGES` in `index.html`) | CC-BY-SA 4.0 (OpenMoji) |
 | Curated essentials | MIT |
