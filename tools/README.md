@@ -41,6 +41,12 @@ strips their ids, and writes an `IMAGES` map between the `IMAGES-START` /
 `hanzi -> codepoint` line in its `NOUN_EMOJI` map and re-running. It needs
 network access only the first time each image is fetched.
 
+`fix_sandhi.py` rewrites the baked pinyin to apply 一/不 tone sandhi (the spoken
+tone, not the citation tone the dictionary gives). Run it with no args for a
+preview (`_sandhi_preview.txt`) and `--apply` to rewrite `index.html`. It keeps
+citation tone for ordinals/dates/counting and leaves rows it can't align cleanly.
+It's idempotent — a second run finds nothing to change.
+
 `build_icons.py` works the same way for the UI icons: it downloads the Lucide
 SVGs (ISC) named in its `NAMES` map, inlines them as an `ICONS` map between the
 `ICONS-START` / `ICONS-END` markers, and caches under `tools/_icon_cache/`. Add a

@@ -3,6 +3,7 @@ tools/*.json
 tools/__pycache__/
 tools/_img_cache/
 tools/_icon_cache/
+tools/_sandhi_preview.txt
 *.tsv
 *.bz2
 *.zip

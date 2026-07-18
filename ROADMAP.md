@@ -79,6 +79,7 @@ the audio controls at phone widths.
   only progress is persisted.
 - **Clarify the listening chip labels.** "🎧 Listen → English" reads as "listen to English" to new
   eyes; it means hear the Chinese, recall the English. "🎧 Hear 汉字 → English" is unambiguous.
-- **Phrase pinyin nits.** `pypinyin` misses some 不/一 tone sandhi inside Tatoeba phrases (the 44
-  curated essentials were hand-corrected; the 3,038 phrases were not). Tone errors only cost
-  partial credit, never a wrong answer.
+- ~~**Phrase pinyin nits.** `pypinyin` misses some 不/一 tone sandhi inside Tatoeba phrases.~~
+  **Done.** `tools/fix_sandhi.py` now applies 一/不 sandhi across the whole deck (140 不 + 253 一),
+  keeping citation tone for ordinals/dates/counting. Third-tone sandhi (你好 → ní hǎo) is still not
+  written, matching standard pinyin convention.
