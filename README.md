@@ -20,21 +20,26 @@ vocabulary you actually need comes up before the rare stuff.
   it goes past too fast.
 - **Hint button.** Reveals the pinyin without giving the answer away. It hides itself whenever the
   pinyin *is* the answer being asked for.
-- **A small rotation, not the whole deck.** Only ~20 items are in play at once, so the deck feels
-  learnable instead of endless. Get one right **5 times in a row** and it graduates to the **Got it
-  pile**, and the next (most-common-first) drops into its slot. A miss resets it to 0. Adjust the
-  size under *Study settings → In rotation*.
+- **A focused set, not the whole deck.** Only ~40 *words* are in play at once, so the deck feels
+  learnable instead of endless. Adjust the count under *Study settings → Words in play*.
+- **Spaced, not massed.** A scheduler keeps two cards of the *same word* from ever appearing
+  back-to-back, and holds them ~30–50 cards apart — far enough that your brain has to actually
+  retrieve it (which is what builds long-term memory), close enough to reinforce. That's *why* ~40
+  words are in play: you can't hold a 30-card gap with only a handful of words.
 - **Each direction stands alone.** 你好→hello and hello→你好 are separate items with separate
-  progress — recognising a word isn't the same as producing it. So the rotation is 20 *directions*
-  (drawn from the directions you turn on: 汉字→English, English→汉字, 汉字→pinyin, pinyin→汉字,
-  pinyin→English, English→pinyin, and three listening ones), and each graduates on its own.
-- **Skip and reshuffle.** *Skip* parks the current item and moves on, no change to progress.
-  *Reshuffle card* sends the current one back into the big pile and pulls a fresh one; *New 20*
-  sends the whole on-deck set back and grabs 20 new items.
-- **Noun pictures.** Concrete nouns show a cartoon illustration — 🍎 for 苹果, 🐟 for 鱼 — so the
-  object attaches to the characters and pinyin, not to an English word. The picture only appears
-  when it can't give the answer away (when English is the prompt, or after you reveal).
-- **Pick your directions.** Study only pinyin→English, or only 🎧→English, or any mix.
+  progress — recognising a word isn't the same as producing it. Each graduates on its own after
+  **3 correct in a row** (a miss resets it to 0), and a word leaves the rotation once all its
+  directions are done. The direction picker is a 5-column grid grouped by prompt — **pinyin**,
+  **汉字**, **picture**, **listening**, **English** — turn on any mix (e.g. only picture→pinyin).
+- **Skip and reshuffle.** *Skip* parks the current card and moves on, no change to progress.
+  *Reshuffle word* sends the current word back into the big pile and pulls a fresh one; *New set*
+  sends every word in play back and grabs a fresh batch.
+- **Noun pictures — as a hint *and* as a prompt.** Concrete nouns carry a cartoon illustration.
+  It reinforces a card (shown when English is the prompt or after you reveal, never in a way that
+  gives the answer away), and you can also study **picture → pinyin/汉字/English** directly: see the
+  object, recall the Chinese.
+- **No emoji — a clean icon set.** Every glyph in the interface is an inlined
+  [Lucide](https://lucide.dev) icon (offline, scales sharply), not an emoji.
 - **Categories.** 16 topics (food, travel, feelings, …), 11 word types (verbs, conjunctions,
   measure words, …), plus Misc. Multi-select, and cards can belong to several — 吃饭 is *food*,
   *home* and a *verb*.
@@ -47,8 +52,12 @@ vocabulary you actually need comes up before the rare stuff.
   hearing it would give away the answer. Uses the browser's own speech engine, so it needs a
   Chinese voice installed; listening cards disappear if the browser has no speech at all.
 - **Character style.** Microsoft YaHei (how characters look in phone messaging) or SimSun (print).
-- **Add your own.** One at a time, or paste a whole list — tab / `|` / `;` / comma separated, with
-  a live preview and duplicate detection.
+- **Add your own.** One at a time, or a whole list pasted into three aligned columns (hanzi /
+  pinyin / English, matched row by row) with a live preview. A card needs **at least two of the
+  three** fields.
+- **Review added words with AI.** Words you add are flagged *unreviewed*. One button copies them as
+  a ready prompt; paste it to Claude to check the hanzi/pinyin/English and fill any gaps, then paste
+  the reply back to update those cards and mark them reviewed.
 
 ## Keyboard
 

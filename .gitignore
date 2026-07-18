@@ -2,6 +2,7 @@
 tools/*.json
 tools/__pycache__/
 tools/_img_cache/
+tools/_icon_cache/
 *.tsv
 *.bz2
 *.zip

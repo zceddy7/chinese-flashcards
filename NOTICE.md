@@ -56,7 +56,16 @@ The cartoon illustrations shown on concrete-noun cards (the `IMAGES` map in
 modified version — must stay under CC BY-SA 4.0 with attribution to OpenMoji. That
 applies to the embedded art, not to the app code around it.
 
-## 5. Curated essentials
+## 5. UI icons — ISC
+
+> **Lucide** — <https://lucide.dev>
+> Icon set licensed under the ISC licence (a fork of Feather Icons).
+
+The interface icons (the `ICONS` map in `index.html`) are Lucide SVGs, inlined at
+build time by `tools/build_icons.py`. The ISC licence permits use with attribution;
+its copyright notice is reproduced here for the Lucide and Feather contributors.
+
+## 6. Curated essentials
 
 The 44 everyday expressions listed in `tools/build_supplement.py` (你好, 早上好, 多少钱, …) were
 written for this project and are covered by the MIT licence above. HSK word lists omit them
@@ -72,4 +81,5 @@ because they parse as compounds.
 | Word definitions + pinyin in the deck | CC-BY-SA 4.0 (CC-CEDICT) |
 | Phrase sentences + translations | CC-BY 2.0 FR (Tatoeba) |
 | Noun illustrations (`IMAGES` in `index.html`) | CC-BY-SA 4.0 (OpenMoji) |
+| UI icons (`ICONS` in `index.html`) | ISC (Lucide) |
 | Curated essentials | MIT |

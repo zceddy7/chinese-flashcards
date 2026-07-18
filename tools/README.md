@@ -41,6 +41,12 @@ strips their ids, and writes an `IMAGES` map between the `IMAGES-START` /
 `hanzi -> codepoint` line in its `NOUN_EMOJI` map and re-running. It needs
 network access only the first time each image is fetched.
 
+`build_icons.py` works the same way for the UI icons: it downloads the Lucide
+SVGs (ISC) named in its `NAMES` map, inlines them as an `ICONS` map between the
+`ICONS-START` / `ICONS-END` markers, and caches under `tools/_icon_cache/`. Add a
+UI icon by adding a `key -> lucide-name` line and re-running. The app has no
+emoji; every glyph in the chrome is a Lucide icon rendered from this map.
+
 ## Notes on the tricky bits
 
 **Picking the right reading.** The dataset's first form for a word is often a surname or a rare

@@ -121,10 +121,28 @@
     border: 1px solid var(--line); border-radius: 8px;
   }
   .rot-note { font-size: 12px; color: var(--muted); align-self: center; }
+  .danger-zone {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line);
+  }
+  .danger-note { font-size: 12px; color: var(--muted); flex: 1; min-width: 180px; }
+  button.danger {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  }
+  button.danger:hover {
+    color: #fff; background: var(--accent);
+    border-color: var(--accent);
+  }
   /* ---- Noun illustration ---- */
   .noun-img { line-height: 0; margin-bottom: 14px; }
   .noun-img svg { width: 96px; height: 96px; display: block; }
-  @media (max-width: 480px) { .noun-img svg { width: 76px; height: 76px; } }
+  /* When the picture IS the question, show it large and centred. */
+  .noun-img.as-prompt svg { width: 168px; height: 168px; }
+  @media (max-width: 480px) {
+    .noun-img svg { width: 76px; height: 76px; }
+    .noun-img.as-prompt svg { width: 140px; height: 140px; }
+  }
   /* ---- Audio controls ---- */
   .audio-ctl { display: flex; gap: 6px; }
   .audio-ctl button {
@@ -253,6 +271,30 @@
   .chip .sample { font-size: 15px; margin-right: 5px; }
   .chip .sample.yahei { font-family: "Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif; }
   .chip .sample.simsun { font-family: "SimSun","Songti SC","Noto Serif SC",serif; }
+  /* Direction picker: 5 columns (by prompt), each button 3 lines src / ↓ / tgt. */
+  .setting-col { flex-direction: column; align-items: stretch; }
+  .setting-col > .setting-label { width: auto; margin-bottom: 8px; }
+  .dir-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; }
+  .dir-col { display: flex; flex-direction: column; gap: 6px; }
+  .chip.dir3 {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; padding: 7px 3px; border-radius: 10px; line-height: 1.15; text-align: center;
+  }
+  .chip.dir3 .d-src, .chip.dir3 .d-tgt { white-space: nowrap; font-size: 12px; }
+  .chip.dir3 .d-arw { font-size: 10px; opacity: .65; }
+  @media (max-width: 520px) {
+    .chip.dir3 { padding: 6px 2px; }
+    .chip.dir3 .d-src, .chip.dir3 .d-tgt { font-size: 11px; }
+  }
+  /* Inline Lucide icons take the current text colour and sit with the text. */
+  .ico { display: inline-flex; align-items: center; justify-content: center; vertical-align: -0.14em; }
+  .ico svg { width: 1.05em; height: 1.05em; display: block; }
+  .cat-sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+  .add-sep { border-top: 1px solid var(--line); margin: 20px 0 16px; }
+  .list-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .list-col { display: flex; flex-direction: column; gap: 4px; }
+  .list-col .cat-sub { margin-bottom: 2px; }
+  .list-col textarea { min-height: 120px; width: 100%; }
   .warn-msg { font-size: 13px; color: var(--warn); margin-top: 12px; }
 
   /* ---- Lists (paste preview + mastered pile) ---- */
@@ -310,16 +352,16 @@
       <div class="noun-img hidden" id="noun-img" aria-hidden="true"></div>
 
       <div class="prompt" id="prompt"></div>
-      <div class="listen-mark hidden" id="listen-mark" aria-hidden="true">🎧</div>
+      <div class="listen-mark hidden" id="listen-mark" aria-hidden="true"><span class="ico" data-icon="headphones"></span></div>
 
       <!-- Playback: sits in the corner on text cards, front and centre on
            listening cards. Same buttons either way. Ordered after the headphone
            mark so the centred layout reads top-down; corner mode is absolute,
            so DOM order doesn't affect it. -->
       <div class="audio-ctl hidden" id="audio-ctl">
-        <button id="play-normal" title="Play">🔊</button>
-        <button id="play-slow" title="Slow (60%)">🐢</button>
-        <button id="play-slower" title="Slower (40%)">🐌</button>
+        <button id="play-normal" title="Play"><span class="ico" data-icon="volume"></span></button>
+        <button id="play-slow" title="Slow (60%)"><span class="ico" data-icon="turtle"></span></button>
+        <button id="play-slower" title="Slower (40%)"><span class="ico" data-icon="snail"></span></button>
       </div>
 
       <div class="hint-line hidden" id="hint-line"></div>
@@ -333,7 +375,7 @@
       <div class="ask-label" id="ask-label"></div>
     </div>
     <div class="hint-row hidden" id="hint-row">
-      <button id="btn-hint">💡 Hint: show pinyin</button>
+      <button id="btn-hint"><span class="ico" data-icon="lightbulb"></span> Hint: show pinyin</button>
     </div>
 
     <!-- Typing mode -->
@@ -355,9 +397,9 @@
 
     <!-- Skip + reshuffle. Always available while studying. -->
     <div class="deck-controls" id="deck-controls">
-      <button id="btn-skip" title="Skip this one for now (no change to progress)">⏭ Skip</button>
-      <button id="btn-reshuffle-one" title="Put this card back in the big pile and pull a fresh one">🔀 Reshuffle card</button>
-      <button id="btn-reshuffle-all" title="Send all on-deck cards back and grab 20 new ones">🔄 New 20</button>
+      <button id="btn-skip" title="Skip this one for now (no change to progress)"><span class="ico" data-icon="skip"></span> Skip</button>
+      <button id="btn-reshuffle-one" title="Put this word back in the big pile and pull a fresh one"><span class="ico" data-icon="shuffle"></span> Reshuffle word</button>
+      <button id="btn-reshuffle-all" title="Send all words in play back and grab a fresh set"><span class="ico" data-icon="refresh"></span> New set</button>
     </div>
   </div>
 
@@ -367,13 +409,9 @@
   </div>
 
   <div class="toolbar">
-    <button id="cycle-kind">📚 <span id="kind-label"></span></button>
-    <button id="toggle-cats">🏷 <span id="cats-label"></span></button>
-    <button id="toggle-settings">⚙ Study settings</button>
-    <button id="toggle-mastered">🏆 Got it pile</button>
-    <button id="toggle-add">+ Add one</button>
-    <button id="toggle-paste">📋 Paste a list</button>
-    <button id="reset">Reset progress</button>
+    <button id="toggle-settings"><span class="ico" data-icon="settings"></span> Study settings</button>
+    <button id="toggle-mastered"><span class="ico" data-icon="trophy"></span> Got it pile</button>
+    <button id="toggle-add"><span class="ico" data-icon="plus"></span> Add cards</button>
   </div>
 
   <div class="panel hidden" id="settings-panel">
@@ -406,51 +444,70 @@
     </div>
 
     <div class="setting">
-      <span class="setting-label">In rotation</span>
+      <span class="setting-label">Words in play</span>
       <div class="chips">
         <input type="number" id="rot-size" min="5" max="200" step="1" inputmode="numeric">
-        <span class="rot-note">directions in play at once (你好→hello and hello→你好 count separately) — each leaves for a new one after 5 in a row</span>
+        <span class="rot-note">distinct words studied at once. More words = related cards land further apart (better recall); each direction still graduates on its own after 3 in a row.</span>
       </div>
     </div>
 
-    <div class="setting">
+    <div class="setting setting-col">
+      <span class="setting-label">Categories</span>
+      <div class="help" style="margin-bottom:10px">
+        A card shows if it matches <strong>any</strong> category you pick — cards can belong to
+        several (吃饭 is food <em>and</em> a verb). Anything untagged is in Misc.
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <button id="cats-all">Select all</button>
+        <button id="cats-none">Clear</button>
+        <span class="status" id="cats-status"></span>
+      </div>
+      <div class="cat-sub">Topics</div>
+      <div class="chips" id="cat-chips-topic" style="margin-bottom:12px"></div>
+      <div class="cat-sub">Word types</div>
+      <div class="chips" id="cat-chips-type" style="margin-bottom:12px"></div>
+      <div class="cat-sub">Other</div>
+      <div class="chips" id="cat-chips-other"></div>
+      <div class="warn-msg hidden" id="cats-warn"></div>
+    </div>
+
+    <div class="setting setting-col">
       <span class="setting-label">Study these</span>
-      <div class="chips" id="dir-chips">
-        <button class="chip" data-dir="hanzi>english"><span lang="zh-Hans">汉字</span> → English</button>
-        <button class="chip" data-dir="english>hanzi">English → <span lang="zh-Hans">汉字</span></button>
-        <button class="chip" data-dir="hanzi>pinyin"><span lang="zh-Hans">汉字</span> → Pinyin</button>
-        <button class="chip" data-dir="pinyin>hanzi">Pinyin → <span lang="zh-Hans">汉字</span></button>
-        <button class="chip" data-dir="pinyin>english">Pinyin → English</button>
-        <button class="chip" data-dir="english>pinyin">English → Pinyin</button>
-        <button class="chip" data-dir="audio>english">🎧 Listen → English</button>
-        <button class="chip" data-dir="audio>pinyin">🎧 Listen → Pinyin</button>
-        <button class="chip" data-dir="audio>hanzi">🎧 Listen → <span lang="zh-Hans">汉字</span></button>
+      <!-- Five columns by prompt: from pinyin / 汉字 / picture / listening /
+           English. Each button is 3 lines — source, ↓, target. -->
+      <div class="dir-grid" id="dir-chips">
+        <div class="dir-col">
+          <button class="chip dir3" data-dir="pinyin>hanzi"><span class="d-src">Pinyin</span><span class="d-arw">↓</span><span class="d-tgt" lang="zh-Hans">汉字</span></button>
+          <button class="chip dir3" data-dir="pinyin>english"><span class="d-src">Pinyin</span><span class="d-arw">↓</span><span class="d-tgt">English</span></button>
+        </div>
+        <div class="dir-col">
+          <button class="chip dir3" data-dir="hanzi>english"><span class="d-src" lang="zh-Hans">汉字</span><span class="d-arw">↓</span><span class="d-tgt">English</span></button>
+          <button class="chip dir3" data-dir="hanzi>pinyin"><span class="d-src" lang="zh-Hans">汉字</span><span class="d-arw">↓</span><span class="d-tgt">Pinyin</span></button>
+        </div>
+        <div class="dir-col">
+          <button class="chip dir3" data-dir="image>english"><span class="d-src"><span class="ico" data-icon="image"></span> Picture</span><span class="d-arw">↓</span><span class="d-tgt">English</span></button>
+          <button class="chip dir3" data-dir="image>pinyin"><span class="d-src"><span class="ico" data-icon="image"></span> Picture</span><span class="d-arw">↓</span><span class="d-tgt">Pinyin</span></button>
+          <button class="chip dir3" data-dir="image>hanzi"><span class="d-src"><span class="ico" data-icon="image"></span> Picture</span><span class="d-arw">↓</span><span class="d-tgt" lang="zh-Hans">汉字</span></button>
+        </div>
+        <div class="dir-col">
+          <button class="chip dir3" data-dir="audio>english"><span class="d-src"><span class="ico" data-icon="headphones"></span> Listen</span><span class="d-arw">↓</span><span class="d-tgt">English</span></button>
+          <button class="chip dir3" data-dir="audio>pinyin"><span class="d-src"><span class="ico" data-icon="headphones"></span> Listen</span><span class="d-arw">↓</span><span class="d-tgt">Pinyin</span></button>
+          <button class="chip dir3" data-dir="audio>hanzi"><span class="d-src"><span class="ico" data-icon="headphones"></span> Listen</span><span class="d-arw">↓</span><span class="d-tgt" lang="zh-Hans">汉字</span></button>
+        </div>
+        <div class="dir-col">
+          <button class="chip dir3" data-dir="english>hanzi"><span class="d-src">English</span><span class="d-arw">↓</span><span class="d-tgt" lang="zh-Hans">汉字</span></button>
+          <button class="chip dir3" data-dir="english>pinyin"><span class="d-src">English</span><span class="d-arw">↓</span><span class="d-tgt">Pinyin</span></button>
+        </div>
       </div>
     </div>
     <div class="setting-hint" id="dir-hint"></div>
 
     <div class="warn-msg hidden" id="settings-warn"></div>
-  </div>
 
-  <div class="panel hidden" id="cats-panel">
-    <h2>Categories</h2>
-    <div class="help">
-      Pick any mix — a card shows if it matches <strong>any</strong> one you choose.
-      Cards often belong to several (吃饭 is food <em>and</em> a verb), so they can
-      appear under more than one. Anything the tagger couldn't place is in Misc.
+    <div class="danger-zone">
+      <button id="reset" class="danger">Reset all progress</button>
+      <span class="danger-note">Clears every direction's progress and the Got it pile. Cards you added are kept. Asks first.</span>
     </div>
-    <div class="row" style="margin-bottom:14px">
-      <button id="cats-all">Select all</button>
-      <button id="cats-none">Clear</button>
-      <span class="status" id="cats-status"></span>
-    </div>
-    <div class="setting"><span class="setting-label">Topics</span></div>
-    <div class="chips" id="cat-chips-topic" style="margin-bottom:16px"></div>
-    <div class="setting"><span class="setting-label">Word types</span></div>
-    <div class="chips" id="cat-chips-type" style="margin-bottom:16px"></div>
-    <div class="setting"><span class="setting-label">Other</span></div>
-    <div class="chips" id="cat-chips-other"></div>
-    <div class="warn-msg hidden" id="cats-warn"></div>
   </div>
 
   <div class="panel hidden" id="mastered-panel">
@@ -463,7 +520,9 @@
   </div>
 
   <div class="panel hidden" id="add-panel">
-    <h2>Add a card</h2>
+    <h2>Add cards</h2>
+
+    <div class="cat-sub">Add one</div>
     <div class="row">
       <input type="text" id="in-hanzi" placeholder="汉字" autocomplete="off" lang="zh-Hans">
       <input type="text" id="in-pinyin" placeholder="pinyin" autocomplete="off">
@@ -471,27 +530,48 @@
       <button id="btn-add">Add</button>
     </div>
     <div class="tone-bar" id="add-tone-bar"></div>
-    <div class="field-note" id="add-note">Fill in any boxes you want — leave the rest empty and they're skipped.</div>
-  </div>
+    <div class="field-note" id="add-note">Fill in at least two of the three boxes.</div>
 
-  <div class="panel hidden" id="paste-panel">
-    <h2>Paste a list of words or sentences</h2>
+    <div class="add-sep"></div>
+
+    <div class="cat-sub">Add a list</div>
     <div class="help">
-      One card per line, three parts: <strong>hanzi, pinyin, English</strong>.
-      Separate the parts with a <code>tab</code>, <code>|</code>, <code>;</code>, or <code>,</code> — whichever you have.
-      Pinyin is optional: <code>汉字 | English</code> works too.
-      Blank lines and lines starting with <code>#</code> are skipped.
-      <br>Example:
-      <code>我很忙 | wǒ hěn máng | I am very busy</code>
+      One card per line, lined up across the three boxes — hanzi in the first,
+      pinyin in the second, English in the third. Leave a box empty for a field you
+      don't have; a card needs <strong>at least two of the three</strong>. Blank
+      lines and lines starting with <code>#</code> are skipped.
     </div>
-    <textarea id="in-paste" spellcheck="false" placeholder="你好 | nǐ hǎo | hello
-我很忙 | wǒ hěn máng | I am very busy
-这个多少钱？| zhè ge duō shao qián? | How much is this?"></textarea>
+    <div class="list-cols">
+      <label class="list-col"><span class="cat-sub">汉字</span>
+        <textarea id="col-hanzi" spellcheck="false" lang="zh-Hans" placeholder="你好&#10;我很忙&#10;苹果"></textarea></label>
+      <label class="list-col"><span class="cat-sub">pinyin</span>
+        <textarea id="col-pinyin" spellcheck="false" placeholder="nǐ hǎo&#10;wǒ hěn máng&#10;píng guǒ"></textarea></label>
+      <label class="list-col"><span class="cat-sub">English</span>
+        <textarea id="col-english" spellcheck="false" placeholder="hello&#10;I am very busy&#10;apple"></textarea></label>
+    </div>
     <div class="import-bar">
       <button id="btn-import">Add to deck</button>
       <span class="status" id="paste-status"></span>
     </div>
     <div class="listing hidden" id="paste-preview"></div>
+
+    <div class="add-sep"></div>
+
+    <div class="cat-sub"><span class="ico" data-icon="sparkles"></span> Review with AI</div>
+    <div class="help">
+      Words you add are marked <em>unreviewed</em>. Copy them, paste them to Claude
+      and ask it to check the hanzi/pinyin/English and fill any gaps, then paste its
+      reply below to update those cards and mark them reviewed.
+    </div>
+    <div class="import-bar">
+      <button id="btn-copy-review"><span class="ico" data-icon="sparkles"></span> Copy for review</button>
+      <span class="status" id="review-status"></span>
+    </div>
+    <textarea id="in-corrections" spellcheck="false" placeholder="Paste Claude's corrected list here — hanzi | pinyin | English per line"></textarea>
+    <div class="import-bar">
+      <button id="btn-apply-corrections"><span class="ico" data-icon="check"></span> Apply corrections</button>
+      <span class="status" id="corrections-status"></span>
+    </div>
   </div>
 </main>
 
@@ -11091,30 +11171,55 @@ const IMAGES = {
 };
 /* IMAGES-END */
 
+/* ICONS-START — Lucide (https://lucide.dev), ISC licence. Inline SVGs,
+   stroke=currentColor so they take the button's colour. tools/build_icons.py. */
+const ICONS = {
+"trophy":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978\" /><path d=\"M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978\" /><path d=\"M18 9h1.5a1 1 0 0 0 0-5H18\" /><path d=\"M4 22h16\" /><path d=\"M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z\" /><path d=\"M6 9H4.5a1 1 0 0 1 0-5H6\" /></svg>",
+"settings":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\" /><circle cx=\"12\" cy=\"12\" r=\"3\" /></svg>",
+"plus":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M5 12h14\" /><path d=\"M12 5v14\" /></svg>",
+"skip":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M21 4v16\" /><path d=\"M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z\" /></svg>",
+"shuffle":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"m18 14 4 4-4 4\" /><path d=\"m18 2 4 4-4 4\" /><path d=\"M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22\" /><path d=\"M2 6h1.972a4 4 0 0 1 3.6 2.2\" /><path d=\"M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45\" /></svg>",
+"refresh":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /><path d=\"M21 3v5h-5\" /><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /><path d=\"M8 16H3v5\" /></svg>",
+"volume":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /><path d=\"M16 9a5 5 0 0 1 0 6\" /><path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" /></svg>",
+"turtle":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"m12 10 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a8 8 0 1 0-16 0v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3l2-4h4Z\" /><path d=\"M4.82 7.9 8 10\" /><path d=\"M15.18 7.9 12 10\" /><path d=\"M16.93 10H20a2 2 0 0 1 0 4H2\" /></svg>",
+"snail":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M2 13a6 6 0 1 0 12 0 4 4 0 1 0-8 0 2 2 0 0 0 4 0\" /><circle cx=\"10\" cy=\"13\" r=\"8\" /><path d=\"M2 21h12c4.4 0 8-3.6 8-8V7a2 2 0 1 0-4 0v6\" /><path d=\"M18 3 19.1 5.2\" /><path d=\"M22 3 20.9 5.2\" /></svg>",
+"headphones":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3\" /></svg>",
+"image":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /><circle cx=\"9\" cy=\"9\" r=\"2\" /><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" /></svg>",
+"lightbulb":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /><path d=\"M9 18h6\" /><path d=\"M10 22h4\" /></svg>",
+"sparkles":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /><path d=\"M20 2v4\" /><path d=\"M22 4h-4\" /><circle cx=\"4\" cy=\"20\" r=\"2\" /></svg>",
+"check":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M20 6 9 17l-5-5\" /></svg>",
+"undo":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M9 14 4 9l5-5\" /><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\" /></svg>"
+};
+/* ICONS-END */
+
 const KEY = "chinese-flashcards-v1";
 const DECK_VERSION = 2;   // bump to merge new built-in cards into existing saves
 // Fields a card actually stores.
 const FIELDS = ["hanzi", "pinyin", "english"];
 // "audio" is a pseudo-field: it can be the question (hear it, recall the rest)
 // but never the answer — you can't type a sound. It speaks the card's hanzi.
-const LABEL = { hanzi: "汉字", pinyin: "pinyin", english: "English", audio: "listen" };
+const LABEL = { hanzi: "汉字", pinyin: "pinyin", english: "English", audio: "listen", image: "picture" };
 // Playback rates: normal, then the two slow-down steps.
 const RATE_NORMAL = 0.85, RATE_SLOW = 0.6, RATE_SLOWER = 0.4;
 const DAY = 86400000;
 
 // Each direction is mastered after this many correct answers in a row.
-const MASTER_AT = 5;
+const MASTER_AT = 3;
 // Days to wait after n correct answers.
 const INTERVALS = [0, 1, 2, 4, 8, 16];
 
-// ---- Direction-level familiarisation rotation ----
-// Only a small set of *directions* is in play at once. Each direction is its own
-// item: 你好→hello and hello→你好 are unrelated and graduate separately. A
-// direction graduates to the Got it pile after MASTER_AT correct answers in a row
-// (a miss resets it to 0), and the next direction by frequency takes its slot.
-// This keeps the deck small enough to actually get familiar with, instead of
-// facing tens of thousands at once.
-const ROTATION_SIZE = 20;         // how many directions are in play at a time
+// ---- Word rotation with spaced scheduling ----
+// A set of ~ROTATION_SIZE distinct WORDS is in play at once. All of a word's
+// turned-on directions are active, and each direction graduates to the Got it
+// pile on its own after MASTER_AT correct in a row (a miss resets it to 0). When
+// every direction of a word has graduated, the word leaves and a new one enters.
+//
+// The scheduler spaces retrieval for better recall: two cards of the SAME word
+// never appear back-to-back, and stay at least MIN_GAP cards apart — which is why
+// enough distinct words must be in play (you can't hold a 30-card gap with only a
+// handful of words). With ~40 words active, related cards land ~30-50 apart.
+const ROTATION_SIZE = 40;         // how many distinct words are in play at once
+const MIN_GAP = 30;               // fewest cards between two of the same word
 
 const FONTS = {
   yahei: `"Microsoft YaHei", "PingFang SC", "HarmonyOS Sans SC", "Noto Sans SC",
@@ -11130,6 +11235,9 @@ const DIR_LIST = [
   ["pinyin", "english"], ["english", "pinyin"],
   // Listening: audio only ever appears on the left.
   ["audio", "english"], ["audio", "pinyin"], ["audio", "hanzi"],
+  // Picture: like audio, "image" is a prompt-only pseudo-field — you recall the
+  // rest from the illustration. Only cards that have an illustration qualify.
+  ["image", "english"], ["image", "pinyin"], ["image", "hanzi"],
 ];
 
 // Display names + grouping for the category chips.
@@ -11178,6 +11286,7 @@ const DEFAULTS = {
     "hanzi>pinyin": true,   "pinyin>hanzi": false,
     "pinyin>english": false, "english>pinyin": true,
     "audio>english": true,  "audio>pinyin": true, "audio>hanzi": false,
+    "image>english": false, "image>pinyin": true, "image>hanzi": true,
   },
 };
 
@@ -11188,7 +11297,6 @@ const CAN_SPEAK = typeof window !== "undefined" && !!window.speechSynthesis;
 // isn't in the temporal dead zone when the first assignIds() fires.
 let _nextId = 1;
 let state = load();
-let queue = [];
 let unit = null;         // { card, pf, af } — one direction of one card
 let current = null;      // unit.card
 let promptField = null;  // the question field
@@ -11238,7 +11346,7 @@ function load() {
   try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!saved || !saved.cards) {
     return { cards: assignIds(buildBuiltIn()), seen: 0, deckVersion: DECK_VERSION,
-             rotation: [], ...structuredClone(DEFAULTS) };
+             rotation: [], schedVer: 1, ...structuredClone(DEFAULTS) };
   }
   const cards = saved.cards.map(c => {
     const card = { hanzi: "", pinyin: "", english: "", prog: {}, ...c };
@@ -11266,10 +11374,13 @@ function load() {
     deckVersion: DECK_VERSION,
     seen: saved.seen || 0,
     mode: saved.mode || DEFAULTS.mode,
-    rotSize: saved.rotSize || DEFAULTS.rotSize,
-    // Rotation members are direction keys (strings). Drop anything else, incl.
-    // numeric card ids from the earlier card-level model.
-    rotation: Array.isArray(saved.rotation) ? saved.rotation.filter(k => typeof k === "string") : [],
+    // The rotation now holds word ids (numbers). schedVer marks a save written by
+    // this scheduler; older saves used direction-key strings, so reset them —
+    // the rotation and word-count default are rebuilt fresh.
+    schedVer: 1,
+    rotSize: saved.schedVer ? (saved.rotSize || DEFAULTS.rotSize) : DEFAULTS.rotSize,
+    rotation: (saved.schedVer && Array.isArray(saved.rotation))
+      ? saved.rotation.filter(k => typeof k === "number") : [],
     font: saved.font || DEFAULTS.font,
     kind: saved.kind || DEFAULTS.kind,
     cats: Array.isArray(saved.cats) ? saved.cats.filter(c => c in CAT_BIT) : null,
@@ -11316,7 +11427,7 @@ function save() {
   } catch (e) {
     // Quota is the only realistic failure here; say so rather than dying silently.
     const s = document.getElementById("stats");
-    if (s) s.textContent = "⚠ couldn't save progress — browser storage is full";
+    if (s) s.textContent = "Couldn't save progress — browser storage is full";
     console.error("save failed", e);
   }
 }
@@ -11349,9 +11460,15 @@ function catsOf(card) { return CAT_ORDER.filter(c => card.c & CAT_BIT[c]); }
 // An audio question speaks the hanzi, so it needs hanzi even though "audio"
 // isn't a stored field. Without speech support there's nothing to hear at all.
 function hasFields(card, pf, af) {
-  const src = pf === "audio" ? "hanzi" : pf;
-  if (pf === "audio" && !CAN_SPEAK) return false;
-  return !!(card[src] && card[src].trim() && card[af] && card[af].trim());
+  if (pf === "audio") {
+    if (!CAN_SPEAK) return false;
+    return !!(card.hanzi && card.hanzi.trim() && card[af] && card[af].trim());
+  }
+  // A picture prompt needs the card to actually have an illustration.
+  if (pf === "image") {
+    return !!(IMAGES[card.hanzi] && card[af] && card[af].trim());
+  }
+  return !!(card[pf] && card[pf].trim() && card[af] && card[af].trim());
 }
 
 
@@ -11373,8 +11490,7 @@ function countStats() {
   return { fresh, due, mastered, total };
 }
 
-// Direction-level counts for the rotation: how many directions are in play, how
-// many have graduated, and how many eligible directions are waiting for a slot.
+// Word-level counts: distinct words in play, plus directions graduated / to go.
 function cardStats() {
   let got = 0, pool = 0;
   for (const card of state.cards) {
@@ -11385,91 +11501,95 @@ function cardStats() {
       if (p && p.n >= MASTER_AT) got++; else pool++;
     }
   }
-  const inRotation = state.rotation.length;
-  return { inRotation, got, toGo: Math.max(0, pool - inRotation), pool };
+  return { words: state.rotation.length, got, toGo: pool };
 }
 // On reveal, show everything else the card knows — the target is highlighted,
 // the rest is context.
 function answersFor(card, pf) { return filled(card).filter(f => f !== pf); }
 
-// ---- The active rotation ----
-// A rotation member is one direction, addressed by a stable string key so it
-// survives reloads: "<cardId>|<pf>><af>", e.g. "42|hanzi>english".
+// ---- Word rotation ----
+// The rotation holds distinct word ids. All of a word's turned-on directions are
+// in play; each graduates on its own, and the word leaves once they all have.
 function cardById(id) { return state.cards.find(c => c.id === id); }
-function unitKey(cardId, pf, af) { return cardId + "|" + pf + ">" + af; }
-function keyOf(u) { return u.key || unitKey(u.card.id, u.pf, u.af); }
 
-// Resolve a key to a live direction, or null if it no longer belongs (card gone,
-// filtered out, direction turned off, missing fields, or already graduated).
-function unitFromKey(key) {
-  const bar = key.indexOf("|");
-  if (bar < 0) return null;
-  const id = Number(key.slice(0, bar));
-  const arrow = key.indexOf(">", bar);
-  if (arrow < 0) return null;
-  const pf = key.slice(bar + 1, arrow), af = key.slice(arrow + 1);
-  const card = cardById(id);
-  if (!card || !cardOk(card)) return null;
-  if (!state.dirs[pairKey(pf, af)] || !hasFields(card, pf, af)) return null;
-  const p = card.prog[pairKey(pf, af)];
-  if (p && p.n >= MASTER_AT) return null;
-  return { card, pf, af, key };
+// A word's enabled directions it actually has the fields for.
+function wordDirs(card) {
+  return DIR_LIST.filter(([pf, af]) => state.dirs[pairKey(pf, af)] && hasFields(card, pf, af));
+}
+// …of those, the ones not yet graduated — what's still to learn on this word.
+function wordPlayableDirs(card) {
+  return wordDirs(card).filter(([pf, af]) => {
+    const p = card.prog[pairKey(pf, af)];
+    return !(p && p.n >= MASTER_AT);
+  });
+}
+// A word belongs in the rotation if it passes the filters and still has a
+// direction left to learn.
+function wordEligible(card) {
+  return cardOk(card) && wordPlayableDirs(card).length > 0;
 }
 
-// Every eligible (not-yet-graduated) direction, minus the excluded keys.
-function poolUnits(exclude) {
-  const out = [];
-  for (const card of state.cards) {
-    if (!cardOk(card)) continue;
-    for (const [pf, af] of DIR_LIST) {
-      if (!state.dirs[pairKey(pf, af)] || !hasFields(card, pf, af)) continue;
-      const p = card.prog[pairKey(pf, af)];
-      if (p && p.n >= MASTER_AT) continue;
-      const key = unitKey(card.id, pf, af);
-      if (exclude && exclude.has(key)) continue;
-      out.push({ card, pf, af, key });
-    }
-  }
-  return out;
-}
-
-// Directions shelved by a reshuffle sink to the bottom of the pool, so a
-// reshuffle brings something genuinely new rather than the same item back.
-// Runtime only (session-scoped); the persisted rotation itself is unaffected.
+// Words shelved by a reshuffle sink to the bottom of the pool, so a reshuffle
+// brings something genuinely new. Runtime only (session-scoped).
 const benched = {};
 let benchCounter = 0;
-function benchOf(key) { return benched[key] || 0; }
+function benchOf(id) { return benched[id] || 0; }
 
-// Drop rotation members that no longer belong, then top up to rotSize with the
-// next directions from the pool — freshest first (never-shelved, then commonest).
+// Drop rotation words that no longer belong, then top up to rotSize with the next
+// eligible words — freshest first (never-shelved, then commonest).
 function refillRotation() {
   const size = state.rotSize || ROTATION_SIZE;
-  let keys = state.rotation.filter(k => unitFromKey(k));
-  if (keys.length > size) keys = keys.slice(0, size);
-  if (keys.length < size) {
-    const have = new Set(keys);
-    const pool = poolUnits(have)
-      .sort((a, b) => benchOf(a.key) - benchOf(b.key) || a.card.f - b.card.f);
-    for (const u of pool) { keys.push(u.key); if (keys.length >= size) break; }
+  let ids = state.rotation.filter(id => { const c = cardById(id); return c && wordEligible(c); });
+  if (ids.length > size) ids = ids.slice(0, size);
+  if (ids.length < size) {
+    const have = new Set(ids);
+    const pool = state.cards
+      .filter(c => !have.has(c.id) && wordEligible(c))
+      .sort((a, b) => benchOf(a.id) - benchOf(b.id) || a.f - b.f);
+    for (const c of pool) { ids.push(c.id); if (ids.length >= size) break; }
   }
-  state.rotation = keys;
+  state.rotation = ids;
 }
 
-// A pass = one question for each direction currently in the rotation, shuffled.
-// When the queue drains, next() rebuilds it — a fresh pass.
-function buildQueue() {
+// Scheduler state (runtime only). seq counts cards shown; shownAt[id] is the seq
+// a word last appeared at; dirCursor rotates through a word's directions.
+let seq = 0;
+const shownAt = {};
+const dirCursor = {};
+let prevWord = null;
+
+// Callers reshape the active set after settings changes by calling buildQueue();
+// the scheduler itself picks each card on the fly in pickNext().
+function buildQueue() { refillRotation(); }
+
+// Choose the next {card, pf, af}: a word not shown for at least MIN_GAP cards
+// (and never the immediately previous one), then one of its still-to-learn
+// directions. Falls back to the most-overdue word when the gap can't be met
+// (few words left), which keeps related cards as far apart as possible.
+function pickNext() {
   refillRotation();
-  const units = state.rotation.map(unitFromKey).filter(Boolean);
-  for (let i = units.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [units[i], units[j]] = [units[j], units[i]];
+  const active = state.rotation.map(cardById).filter(c => c && wordPlayableDirs(c).length);
+  if (!active.length) return null;
+  let cands = active.filter(c => c.id !== prevWord);
+  if (!cands.length) cands = active;                       // only the previous word is left
+  const ready = cands.filter(c => seq - (shownAt[c.id] ?? -Infinity) >= MIN_GAP);
+  let word;
+  if (ready.length) {
+    word = ready[Math.floor(Math.random() * ready.length)];
+  } else {
+    cands.sort((a, b) => (shownAt[a.id] ?? -Infinity) - (shownAt[b.id] ?? -Infinity));
+    word = cands[0];                                       // most overdue → widest gap
   }
-  queue = units;
+  const dirs = wordPlayableDirs(word);
+  const i = (dirCursor[word.id] || 0) % dirs.length;
+  dirCursor[word.id] = i + 1;
+  const [pf, af] = dirs[i];
+  return { card: word, pf, af };
 }
 
 function next() {
-  if (!queue.length) buildQueue();
-  unit = queue.shift() || null;
+  unit = pickNext();
+  if (unit) { seq++; shownAt[unit.card.id] = seq; prevWord = unit.card.id; }
   current = unit ? unit.card : null;
   promptField = unit ? unit.pf : null;
   targetField = unit ? unit.af : null;
@@ -11505,7 +11625,7 @@ function render() {
     `· ${nCards.toLocaleString()} ${kindWord}${catNote}`;
   const cs = cardStats();
   document.getElementById("stats").textContent =
-    `${cs.inRotation} in rotation · ${cs.got.toLocaleString()} got it · ${cs.toGo.toLocaleString()} to go`;
+    `${cs.words} word${cs.words === 1 ? "" : "s"} in play · ${cs.got.toLocaleString()} got it · ${cs.toGo.toLocaleString()} to go`;
 
   const study = document.getElementById("study");
   const done = document.getElementById("done");
@@ -11513,8 +11633,8 @@ function render() {
   if (!unit) {
     study.classList.add("hidden");
     done.classList.remove("hidden");
-    const nothing = cs.pool === 0 && cs.got === 0;
-    const allGot = cs.pool === 0 && cs.got > 0;
+    const nothing = cs.toGo === 0 && cs.got === 0;
+    const allGot = cs.toGo === 0 && cs.got > 0;
     document.getElementById("done-icon").textContent = nothing ? "空" : "完成";
     document.getElementById("done-msg").textContent = nothing
       ? "Nothing matches your current filters. Turn on more directions or card types under Study settings."
@@ -11526,12 +11646,13 @@ function render() {
   study.classList.remove("hidden");
   done.classList.add("hidden");
 
-  // --- Prompt: exactly one field (or the audio player) ---
+  // --- Prompt: one field, the audio player, or the illustration ---
   const listening = promptField === "audio";
+  const picture = promptField === "image";
   const promptEl = document.getElementById("prompt");
-  promptEl.classList.toggle("hidden", listening);
+  promptEl.classList.toggle("hidden", listening || picture);
   document.getElementById("listen-mark").classList.toggle("hidden", !listening);
-  if (!listening) {
+  if (!listening && !picture) {
     promptEl.textContent = current[promptField];
     promptEl.className = "prompt f-" + promptField + (promptField === "hanzi" ? " zh" : "");
     promptEl.lang = promptField === "hanzi" ? "zh-Hans" : "en";
@@ -11545,13 +11666,15 @@ function render() {
   tag.classList.toggle("near", g >= MASTER_AT - 1);
   document.getElementById("field-tag").textContent = LABEL[promptField];
 
-  // Cartoon illustration for concrete nouns. Only shown when it can't give the
-  // answer away: when the meaning (English) is already the prompt, or on reveal.
-  // Otherwise a picture of an apple beside 苹果 would just hand over "apple".
+  // The illustration. As a "Picture →" prompt it's the question, shown large and
+  // always. Otherwise it's reinforcement on a noun card — shown only when it
+  // can't give the answer away (English is the prompt, or on reveal), so a
+  // picture of an apple never hands over "apple" beside 苹果.
   const art = IMAGES[current.hanzi];
-  const showArt = !!art && (promptField === "english" || revealed);
+  const showArt = !!art && (picture || promptField === "english" || revealed);
   const artEl = document.getElementById("noun-img");
   artEl.classList.toggle("hidden", !showArt);
+  artEl.classList.toggle("as-prompt", picture);
   artEl.innerHTML = showArt ? art : "";
 
   // --- Answer block: target is graded, the rest is context ---
@@ -11581,7 +11704,7 @@ function render() {
   document.getElementById("tone-note").classList.toggle("hidden", !showTones);
 
   const askLabel = document.getElementById("ask-label");
-  const heard = listening ? "Listen — " : "";
+  const heard = listening ? "Listen — " : picture ? "From the picture — " : "";
   if (typing) {
     askLabel.innerHTML = answered ? "press Enter for the next card" : `${heard}type the <b>${LABEL[targetField]}</b>`;
   } else {
@@ -11665,56 +11788,60 @@ function reveal() {
 }
 
 // Records a result against the current direction. Correct advances its count; a
-// miss resets it to 0 and re-asks it this pass. At MASTER_AT the direction
-// graduates to the Got it pile and the next one takes its slot. Returns true if
-// this answer just graduated the direction.
+// miss resets it to 0. At MASTER_AT the direction graduates to the Got it pile;
+// once every direction of the word has graduated, the word leaves the rotation
+// and a new one takes its slot. Returns { dir, word } — whether this answer just
+// graduated the direction and/or finished the whole word. The missed/pending
+// direction simply comes round again when its word next surfaces.
 function record(ok) {
   const p = progOf(current, promptField, targetField);
   if (ok) p.n = Math.min(p.n + 1, MASTER_AT);
-  else { p.n = 0; queue.push(unit); }   // miss: back to 0, comes round again
+  else p.n = 0;
   p.due = Date.now() + INTERVALS[Math.min(p.n, INTERVALS.length - 1)] * DAY;
 
-  let graduated = false;
+  let dir = false, word = false;
   if (p.n >= MASTER_AT) {
-    graduated = true;
-    const key = keyOf(unit);
-    state.rotation = state.rotation.filter(k => k !== key);
-    queue = queue.filter(u => keyOf(u) !== key);
-    delete benched[key];
-    refillRotation();
+    dir = true;
+    if (wordPlayableDirs(current).length === 0) {
+      word = true;
+      const id = current.id;
+      state.rotation = state.rotation.filter(x => x !== id);
+      delete shownAt[id]; delete dirCursor[id]; delete benched[id];
+      refillRotation();
+    }
   }
   state.seen++;
   save();
-  return graduated;
+  return { dir, word };
 }
 
 // ---- Study controls: skip and the two reshuffles ----
-// Skip: park the current direction at the back of this pass and move on. No
-// grade, no progress change.
+// Skip: the current word was already counted as shown, so just move on — it comes
+// back after the usual gap. No grade, no progress change.
 function skipUnit() {
   if (!unit) return;
-  queue.push(unit);
   next();
 }
-// Reshuffle this one: shelve the current direction back into the big pile (its
-// progress kept) and pull a fresh direction into its slot, right now.
+// Reshuffle this word: shelve the whole word back into the big pile (progress
+// kept) and pull a fresh word into the rotation, right now.
 function reshuffleCurrent() {
   if (!unit) return;
-  const key = keyOf(unit);
-  benched[key] = ++benchCounter;
-  state.rotation = state.rotation.filter(k => k !== key);
+  const id = current.id;
+  benched[id] = ++benchCounter;
+  state.rotation = state.rotation.filter(x => x !== id);
+  delete shownAt[id]; delete dirCursor[id];
   refillRotation();
   save();
-  buildQueue();
   next();
 }
-// Reshuffle all: shelve the whole on-deck set back into the pile and grab a fresh
-// rotation of new directions.
+// Reshuffle all: shelve the whole on-deck set of words and grab a fresh set.
 function reshuffleAll() {
-  state.rotation.forEach(k => { benched[k] = ++benchCounter; });
+  state.rotation.forEach(id => { benched[id] = ++benchCounter; });
   state.rotation = [];
+  Object.keys(shownAt).forEach(k => delete shownAt[k]);
+  prevWord = null;
+  refillRotation();
   save();
-  buildQueue();
   next();
 }
 
@@ -11740,10 +11867,12 @@ function submitAnswer() {
     : result === "close" ? `Right syllables — check the tones: ${current[targetField]}`
     : `Not quite — ${LABEL[targetField]}: ${current[targetField]}`;
 
-  // "close" still counts as knowing the word; a miss just doesn't advance.
-  const graduated = record(result !== "wrong");
-  if (graduated) {
-    vEl.innerHTML += ` <span class="mastered">· got it 🏆 — new card added</span>`;
+  // "close" still counts as knowing the word; a miss resets this direction to 0.
+  const g = record(result !== "wrong");
+  if (g.word) {
+    vEl.innerHTML += ` <span class="mastered">· word done <span class="ico">${icon("trophy")}</span> — new word added</span>`;
+  } else if (g.dir) {
+    vEl.innerHTML += ` <span class="mastered">· direction mastered <span class="ico">${icon("trophy")}</span></span>`;
   }
   render();
   speak();
@@ -11852,7 +11981,6 @@ function applyFont() {
   document.documentElement.style.setProperty("--zh-font", FONTS[state.font] || FONTS.yahei);
 }
 
-const KIND_LABEL = { all: "Words + phrases", w: "Words only", p: "Phrases only" };
 
 function setKind(k) {
   state.kind = k;
@@ -11864,7 +11992,6 @@ function setKind(k) {
 }
 
 function renderSettings() {
-  document.getElementById("kind-label").textContent = KIND_LABEL[state.kind];
   document.querySelectorAll("#kind-chips .chip").forEach(b =>
     b.setAttribute("aria-pressed", String(state.kind === b.dataset.kind)));
   const w = state.cards.filter(c => c.t === "w").length;
@@ -11885,7 +12012,7 @@ function renderSettings() {
   if (state.mode === "type" && DIR_LIST.some(([pf, af]) => af === "hanzi" && state.dirs[pairKey(pf, af)])) {
     hint += " Typing 汉字 needs a Chinese keyboard — turn the → 汉字 directions off to skip those.";
   }
-  if (!CAN_SPEAK) hint += " 🎧 Listening needs browser speech, which this browser doesn't offer.";
+  if (!CAN_SPEAK) hint += " Listening needs browser speech, which this browser doesn't offer.";
   document.getElementById("dir-hint").textContent = hint;
 
   const warn = document.getElementById("settings-warn");
@@ -11924,10 +12051,6 @@ function renderCats() {
   document.getElementById("cat-chips-other").innerHTML = groups.other.join("");
 
   const n = sel.size;
-  const label = state.cats === null ? "All categories"
-    : n === 1 ? (CAT_INFO[state.cats[0]] || [state.cats[0]])[0]
-    : `${n} categories`;
-  document.getElementById("cats-label").textContent = label;
   document.getElementById("cats-status").textContent =
     state.cats === null ? "Everything is on." : `${n} of ${CAT_ORDER.length} selected.`;
 
@@ -11948,9 +12071,6 @@ function setCats(list) {
   next();
 }
 
-document.getElementById("toggle-cats").addEventListener("click", () => {
-  if (togglePanel("cats-panel")) renderCats();
-});
 document.getElementById("cats-all").addEventListener("click", () => setCats(null));
 document.getElementById("cats-none").addEventListener("click", () => {
   // Clearing everything would leave nothing to study, so leave Misc off and
@@ -11967,11 +12087,8 @@ document.getElementById("cats-none").addEventListener("click", () => {
   });
 });
 
-// Toolbar button cycles; the settings chips set it directly.
-const KIND_CYCLE = ["all", "w", "p"];
-document.getElementById("cycle-kind").addEventListener("click", () => {
-  setKind(KIND_CYCLE[(KIND_CYCLE.indexOf(state.kind) + 1) % KIND_CYCLE.length]);
-});
+// Words/phrases is chosen from the settings chips (the toolbar cycle button was
+// removed as a duplicate).
 document.getElementById("kind-chips").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if (!b) return;
   setKind(b.dataset.kind);
@@ -12046,7 +12163,7 @@ function renderMastered() {
        <td class="p-hanzi" lang="zh-Hans">${esc(u.card.hanzi || u.card.pinyin || u.card.english)}</td>
        <td class="p-english">${esc(u.card.english || u.card.pinyin || "")}</td>
        <td class="p-dir">${LABEL[u.pf]} → ${LABEL[u.af]}</td>
-       <td class="p-act"><button data-un="${i}" title="Return to study">↩</button></td>
+       <td class="p-act"><button data-un="${i}" title="Return to study"><span class="ico">${icon("undo")}</span></button></td>
      </tr>`).join("") + "</table>";
 
   list.querySelectorAll("button[data-un]").forEach(b => {
@@ -12067,7 +12184,7 @@ document.getElementById("btn-unmaster-all").addEventListener("click", () => {
 });
 
 // ---- Panels ----
-const PANELS = ["settings-panel", "cats-panel", "mastered-panel", "add-panel", "paste-panel"];
+const PANELS = ["settings-panel", "mastered-panel", "add-panel"];
 function togglePanel(id) {
   const target = document.getElementById(id);
   const wasHidden = target.classList.contains("hidden");
@@ -12076,16 +12193,13 @@ function togglePanel(id) {
   return wasHidden;
 }
 document.getElementById("toggle-settings").addEventListener("click", () => {
-  if (togglePanel("settings-panel")) renderSettings();
+  if (togglePanel("settings-panel")) { renderSettings(); renderCats(); }
 });
 document.getElementById("toggle-mastered").addEventListener("click", () => {
   if (togglePanel("mastered-panel")) renderMastered();
 });
 document.getElementById("toggle-add").addEventListener("click", () => {
-  if (togglePanel("add-panel")) document.getElementById("in-hanzi").focus();
-});
-document.getElementById("toggle-paste").addEventListener("click", () => {
-  if (togglePanel("paste-panel")) document.getElementById("in-paste").focus();
+  if (togglePanel("add-panel")) { renderAddReview(); document.getElementById("in-hanzi").focus(); }
 });
 
 // ---- Add one card ----
@@ -12094,27 +12208,31 @@ function studiable(card) {
   return DIR_LIST.some(([pf, af]) =>
     state.dirs[pairKey(pf, af)] && have.includes(pf) && have.includes(af));
 }
+// Cards you enter are flagged so they can be gathered for an AI review pass.
+function markUserAdded(card) { card.src = "user"; card.reviewed = false; }
+function unreviewedCards() { return state.cards.filter(c => c.src === "user" && !c.reviewed); }
+
 function addCard() {
   const vals = FIELDS.map(f => document.getElementById("in-" + f).value.trim());
   const note = document.getElementById("add-note");
-  if (!vals.some(Boolean)) {
-    note.textContent = "Fill in at least one box.";
+  if (vals.filter(Boolean).length < 2) {
+    note.textContent = "Fill in at least two of the three boxes.";
     note.style.color = "var(--accent)";
     return;
   }
   const card = mkCard(vals);
+  markUserAdded(card);
   state.cards.push(card);
   assignIds(state.cards);
   save();
   FIELDS.forEach(f => document.getElementById("in-" + f).value = "");
   document.getElementById("in-hanzi").focus();
-  // One field alone can be stored, but there's nothing to ask about it.
-  const ok = filled(card).length > 1;
-  note.textContent = ok
-    ? (studiable(card) ? "Added." : "Added — but your current Ask/Answer settings don't cover its fields, so it won't come up yet.")
-    : "Added — but with only one field filled in there's nothing to ask, so it won't come up until you add another field.";
-  note.style.color = ok && studiable(card) ? "var(--good)" : "var(--warn)";
+  note.textContent = studiable(card)
+    ? "Added — marked for review."
+    : "Added — but your current directions don't cover its fields, so it won't come up yet.";
+  note.style.color = studiable(card) ? "var(--good)" : "var(--warn)";
   buildQueue();
+  renderAddReview();
   if (!unit) next(); else render();
 }
 document.getElementById("btn-add").addEventListener("click", addCard);
@@ -12175,7 +12293,8 @@ function parsePaste(text) {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
     const card = parseLine(line);
-    if (!card || !card.english) { bad.push(i + 1); return; }
+    // A card needs at least two of the three fields.
+    if (!card || [card.hanzi, card.pinyin, card.english].filter(Boolean).length < 2) { bad.push(i + 1); return; }
     card.dupe = seen.has(card.hanzi);
     if (!card.dupe) seen.add(card.hanzi);
     rows.push(card);
@@ -12183,26 +12302,41 @@ function parsePaste(text) {
   return { rows, bad };
 }
 
-// ---- Paste import UI ----
-const pasteEl = document.getElementById("in-paste");
+// ---- Add-a-list: three aligned columns, matched row by row ----
 const statusEl = document.getElementById("paste-status");
 const previewEl = document.getElementById("paste-preview");
+const listCols = ["hanzi", "pinyin", "english"].map(f => document.getElementById("col-" + f));
 
-function renderPreview() {
-  const text = pasteEl.value;
-  if (!text.trim()) {
-    statusEl.textContent = "";
-    statusEl.className = "status";
+// Zip the three column boxes into rows. A row needs at least two of three fields.
+function parseColumns() {
+  const [H, P, E] = listCols.map(el => el.value.split(/\r?\n/));
+  const n = Math.max(H.length, P.length, E.length);
+  const seen = new Set(state.cards.map(c => c.hanzi).filter(Boolean));
+  const rows = [], bad = [];
+  for (let i = 0; i < n; i++) {
+    const hanzi = (H[i] || "").trim(), pinyin = (P[i] || "").trim(), english = (E[i] || "").trim();
+    if (!hanzi && !pinyin && !english) continue;          // blank row
+    if (hanzi.startsWith("#")) continue;
+    if ([hanzi, pinyin, english].filter(Boolean).length < 2) { bad.push(i + 1); continue; }
+    const dupe = !!hanzi && seen.has(hanzi);
+    if (hanzi && !dupe) seen.add(hanzi);
+    rows.push({ hanzi, pinyin, english, dupe });
+  }
+  return { rows, bad };
+}
+
+function renderListPreview() {
+  if (!listCols.some(el => el.value.trim())) {
+    statusEl.textContent = ""; statusEl.className = "status";
     previewEl.classList.add("hidden");
     return;
   }
-  const { rows, bad } = parsePaste(text);
+  const { rows, bad } = parseColumns();
   const fresh = rows.filter(r => !r.dupe).length;
   const dupes = rows.length - fresh;
-
   const bits = [`${fresh} new card${fresh === 1 ? "" : "s"}`];
   if (dupes) bits.push(`${dupes} already in deck`);
-  if (bad.length) bits.push(`couldn't read line${bad.length === 1 ? "" : "s"} ${bad.slice(0, 5).join(", ")}${bad.length > 5 ? "…" : ""}`);
+  if (bad.length) bits.push(`row${bad.length === 1 ? "" : "s"} ${bad.slice(0, 5).join(", ")}${bad.length > 5 ? "…" : ""} need 2 of 3`);
   statusEl.textContent = bits.join(" · ");
   statusEl.className = "status" + (fresh ? " ok" : bad.length ? " err" : "");
 
@@ -12214,24 +12348,103 @@ function renderPreview() {
        <td class="p-english">${esc(r.english)}</td>
      </tr>`).join("") + "</table>";
 }
-pasteEl.addEventListener("input", renderPreview);
+listCols.forEach(el => el.addEventListener("input", renderListPreview));
 
 document.getElementById("btn-import").addEventListener("click", () => {
-  const { rows } = parsePaste(pasteEl.value);
+  const { rows } = parseColumns();
   const fresh = rows.filter(r => !r.dupe);
   if (!fresh.length) {
-    statusEl.textContent = "Nothing new to add.";
-    statusEl.className = "status err";
+    statusEl.textContent = "Nothing new to add."; statusEl.className = "status err";
     return;
   }
-  fresh.forEach(r => state.cards.push(mkCard([r.hanzi, r.pinyin, r.english])));
+  fresh.forEach(r => {
+    const c = mkCard([r.hanzi, r.pinyin, r.english]);
+    markUserAdded(c);
+    state.cards.push(c);
+  });
   assignIds(state.cards);
   save();
-  pasteEl.value = "";
+  listCols.forEach(el => el.value = "");
   previewEl.classList.add("hidden");
-  statusEl.textContent = `Added ${fresh.length} card${fresh.length === 1 ? "" : "s"}.`;
+  statusEl.textContent = `Added ${fresh.length} card${fresh.length === 1 ? "" : "s"} — marked for review.`;
   statusEl.className = "status ok";
   buildQueue();
+  renderAddReview();
+  if (!unit) next(); else render();
+});
+
+// ---- Review round-trip: copy unreviewed out, paste corrections back ----
+// Clipboard write that also works from a file:// page (execCommand fallback).
+function copyText(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) { return false; }
+}
+
+function renderAddReview() {
+  const n = unreviewedCards().length;
+  const el = document.getElementById("review-status");
+  el.textContent = n ? `${n} word${n === 1 ? "" : "s"} waiting for review.` : "No words waiting for review.";
+  el.className = "status" + (n ? "" : " ok");
+}
+
+document.getElementById("btn-copy-review").addEventListener("click", () => {
+  const list = unreviewedCards();
+  const el = document.getElementById("review-status");
+  if (!list.length) { el.textContent = "Nothing to review."; el.className = "status err"; return; }
+  const text = "Please check these Chinese flashcards for correctness (hanzi, pinyin with tone marks, "
+    + "and English), fix any mistakes, and fill in any missing field. Reply with one card per line as "
+    + "`hanzi | pinyin | English`.\n\n"
+    + list.map(c => [c.hanzi, c.pinyin, c.english].join(" | ")).join("\n");
+  const ok = copyText(text);
+  el.textContent = ok
+    ? `Copied ${list.length} word${list.length === 1 ? "" : "s"}. Paste to Claude, then paste its reply below.`
+    : "Couldn't access the clipboard — select the words in your added list and copy manually.";
+  el.className = "status" + (ok ? " ok" : " err");
+});
+
+document.getElementById("btn-apply-corrections").addEventListener("click", () => {
+  const box = document.getElementById("in-corrections");
+  const el = document.getElementById("corrections-status");
+  const { rows, bad } = parsePaste(box.value);
+  if (!rows.length) {
+    el.textContent = "Nothing to apply — paste Claude's `hanzi | pinyin | English` lines first.";
+    el.className = "status err";
+    return;
+  }
+  let updated = 0, added = 0;
+  rows.forEach(r => {
+    const existing = state.cards.find(c => c.hanzi && c.hanzi === r.hanzi);
+    if (existing) {
+      if (r.pinyin) existing.pinyin = r.pinyin;
+      if (r.english) existing.english = r.english;
+      if (r.hanzi) existing.hanzi = r.hanzi;
+      existing.reviewed = true;
+      updated++;
+    } else {
+      const c = mkCard([r.hanzi, r.pinyin, r.english]);
+      markUserAdded(c); c.reviewed = true;
+      state.cards.push(c); added++;
+    }
+  });
+  assignIds(state.cards);
+  save();
+  box.value = "";
+  const bits = [];
+  if (updated) bits.push(`updated ${updated}`);
+  if (added) bits.push(`added ${added}`);
+  if (bad.length) bits.push(`skipped ${bad.length} unreadable`);
+  el.textContent = (bits.join(" · ") || "Nothing changed") + " — marked reviewed.";
+  el.className = "status ok";
+  buildQueue();
+  renderAddReview();
   if (!unit) next(); else render();
 });
 
@@ -12246,6 +12459,15 @@ document.getElementById("reset").addEventListener("click", () => {
   next();
 });
 
+// Inline Lucide SVGs into every [data-icon] placeholder (see ICONS + build_icons.py).
+function icon(name) { return (typeof ICONS !== "undefined" && ICONS[name]) || ""; }
+function fillIcons(root) {
+  (root || document).querySelectorAll("[data-icon]").forEach(el => {
+    el.innerHTML = icon(el.dataset.icon);
+  });
+}
+
+fillIcons();
 applyFont();
 applyCats();
 renderSettings();
