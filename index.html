@@ -332,11 +332,17 @@
 
   .done { text-align: center; padding: 60px 20px; }
   .done p { color: var(--muted); margin-top: 8px; }
+
+  .storage-warning {
+    background: var(--warn); color: #1a1a1a; font-size: 13px; line-height: 1.5;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 12px;
+  }
 </style>
 </head>
 <body>
 
 <header>
+  <div id="storage-warning" class="storage-warning" hidden></div>
   <h1>Chinese Flashcards <span id="deck-size"></span></h1>
   <div class="stats" id="stats"></div>
 </header>
@@ -11194,6 +11200,32 @@ const ICONS = {
 
 const KEY = "chinese-flashcards-v1";
 const DECK_VERSION = 2;   // bump to merge new built-in cards into existing saves
+
+// Storage can be silently unavailable (blocked cookies, some file:// setups,
+// private-browsing quirks) — localStorage.getItem/setItem throw instead of
+// just failing quietly, so load()'s own try/catch would otherwise hide the
+// real reason. Check once up front and surface it if it's broken.
+let storageOK = true;
+function checkStorage() {
+  try {
+    localStorage.setItem(KEY + ":test", "1");
+    localStorage.removeItem(KEY + ":test");
+    return true;
+  } catch (e) {
+    console.error("localStorage unavailable:", e);
+    storageOK = false;
+    const el = document.getElementById("storage-warning");
+    if (el) {
+      el.hidden = false;
+      el.textContent = "Progress and settings can't be saved in this window — "
+        + "the browser is blocking storage here (" + e.name + ": " + e.message + "). "
+        + "Try a different browser, or open this file over http:// instead of "
+        + "double-clicking it.";
+    }
+    return false;
+  }
+}
+checkStorage();
 // Fields a card actually stores.
 const FIELDS = ["hanzi", "pinyin", "english"];
 // "audio" is a pseudo-field: it can be the question (hear it, recall the rest)
@@ -11425,10 +11457,14 @@ function save() {
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch (e) {
-    // Quota is the only realistic failure here; say so rather than dying silently.
-    const s = document.getElementById("stats");
-    if (s) s.textContent = "Couldn't save progress — browser storage is full";
     console.error("save failed", e);
+    const el = document.getElementById("storage-warning");
+    if (el) {
+      el.hidden = false;
+      el.textContent = e.name === "QuotaExceededError"
+        ? "Couldn't save progress — browser storage is full."
+        : "Couldn't save progress (" + e.name + ": " + e.message + ").";
+    }
   }
 }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
