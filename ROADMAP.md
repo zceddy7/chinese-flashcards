@@ -4,18 +4,14 @@ Ideas noted for later, roughly in the order worth doing. Nothing here is started
 
 ---
 
-## 1. Export / import progress  ← do first
+## 1. Export / import progress  ← DONE
 
-**Why:** all progress lives in one browser's `localStorage` under key
-`chinese-flashcards-v1`. Clearing site data, switching browsers, or a new machine wipes it with no
-recovery. The deck file syncs (it's in a repo / OneDrive); the progress does not.
-
-**Shape:** a "Download backup" button that dumps `state` to a JSON file, and a "Restore" that reads
-one back through the same merge path `load()` already uses. Roughly 30 lines. Also doubles as the
-way to move progress between machines.
-
-**Watch for:** restoring an older backup shouldn't drop newer built-in cards — run it through
-`mergeBuiltIn()` rather than replacing `state.cards` wholesale.
+**Done.** A **Backup** section in Study settings: **Download backup** dumps `state` to a dated
+`chinese-flashcards-backup-YYYY-MM-DD.json` (object-URL blob, works from `file://` `--app` too), and
+**Restore from file** reads one back. `load()` was split into `freshState()` + `hydrate(saved)`, and
+Restore goes through the same `hydrate()` path localStorage does — so a restored backup still picks up
+newer built-in cards via `mergeBuiltIn()` and never replaces `state.cards` wholesale. Restore confirms
+first, resets session-scoped scheduler maps, and refreshes the settings UI.
 
 ## 2. Daily new-card limit + a session finish line  ← largely handled
 
@@ -33,18 +29,16 @@ resets at local midnight. `buildQueue()` already separates `due` from `fresh` an
 at `NEW_BATCH = 40` — that's the hook. Then show "20 new + 45 reviews left today" and a real done
 screen when the day's goal is met, instead of only when the entire deck is exhausted.
 
-## 3. Mastered shouldn't be permanent
+## 3. Mastered shouldn't be permanent  ← DONE
 
-**Note:** graduation is **per-direction** — a direction retires after 5 correct in a row (a miss
-resets it), and the 20-item rotation is made of directions. The resurface-at-60/180-days idea below
-still applies: retired directions leave for good until you return them by hand from the Got it pile.
-
-**Why:** five in a row retires a direction forever (`MASTER_AT = 5`, then it leaves the queue). But
-you will forget 商店 in six months and the app can never find out. This was an explicit request, so
-it's a change to discuss rather than assume.
-
-**Shape:** keep the Got it pile, but let retired directions resurface once at ~60 days and again at
-~180. Surviving that is real mastery. `INTERVALS` currently stops at 16 days.
+**Done.** Graduating a direction (`MASTER_AT` = 3 correct in a row) no longer retires it for good — it
+now resurfaces for a spaced review at `REVIEW_DAYS = [60, 180, 365]` days (last value repeats). The
+formerly-dead `p.due` machinery drives it: `wordPlayableDirs` pulls a direction back into study once
+its review comes due, `refillRotation` gives due reviews priority over brand-new words, and the card
+shows a **review** tag instead of `3/3`. Pass → next rung of the ladder and it settles back in the Got
+it pile (`isSettled`); miss → back to active learning (`p.n`/`p.rev` → 0). `p.rev` tracks the review
+stage. `load()`/`hydrate()` migrates pre-review saves (mastered dirs get `rev:1` + a future due) so
+old progress doesn't all resurface at once.
 
 ## 4. Edit / delete cards
 

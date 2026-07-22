@@ -31,6 +31,8 @@ NAMES = {
     "sparkles":   "sparkles",     # AI review
     "check":      "check",        # generic confirm
     "undo":       "undo-2",       # return to study
+    "download":   "download",     # download backup
+    "upload":     "upload",       # restore from file
 }
 
 

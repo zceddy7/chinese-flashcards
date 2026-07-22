@@ -510,6 +510,21 @@
 
     <div class="warn-msg hidden" id="settings-warn"></div>
 
+    <div class="setting setting-col">
+      <span class="setting-label">Backup</span>
+      <div class="help" style="margin-bottom:10px">
+        All your progress and added cards live in this one browser. Download a
+        backup to keep a copy or move it to another machine — restoring merges it
+        back in and keeps any newer built-in cards.
+      </div>
+      <div class="row">
+        <button id="btn-export"><span class="ico" data-icon="download"></span> Download backup</button>
+        <button id="btn-import-progress"><span class="ico" data-icon="upload"></span> Restore from file</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+        <span class="status" id="backup-status"></span>
+      </div>
+    </div>
+
     <div class="danger-zone">
       <button id="reset" class="danger">Reset all progress</button>
       <span class="danger-note">Clears every direction's progress and the Got it pile. Cards you added are kept. Asks first.</span>
@@ -11194,7 +11209,9 @@ const ICONS = {
 "lightbulb":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /><path d=\"M9 18h6\" /><path d=\"M10 22h4\" /></svg>",
 "sparkles":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /><path d=\"M20 2v4\" /><path d=\"M22 4h-4\" /><circle cx=\"4\" cy=\"20\" r=\"2\" /></svg>",
 "check":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M20 6 9 17l-5-5\" /></svg>",
-"undo":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M9 14 4 9l5-5\" /><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\" /></svg>"
+"undo":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M9 14 4 9l5-5\" /><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\" /></svg>",
+"download":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M12 15V3\" /><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /><path d=\"m7 10 5 5 5-5\" /></svg>",
+"upload":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" ><path d=\"M12 3v12\" /><path d=\"m17 8-5-5-5 5\" /><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /></svg>"
 };
 /* ICONS-END */
 
@@ -11239,6 +11256,22 @@ const DAY = 86400000;
 const MASTER_AT = 3;
 // Days to wait after n correct answers.
 const INTERVALS = [0, 1, 2, 4, 8, 16];
+
+// After a direction graduates it doesn't vanish for good — it comes back for a
+// spaced review so mastery gets re-verified. Each pass pushes the next review
+// this many days out (the last value repeats forever). A missed review drops the
+// direction back into active learning (p.rev → 0, p.n → 0).
+const REVIEW_DAYS = [60, 180, 365];
+
+// A direction's progress state, read off card.prog[dir] = { n, due, rev }.
+// n   — correct-in-a-row toward MASTER_AT while learning.
+// rev — how many spaced reviews it has survived (0 until it first graduates).
+// A mastered direction (n >= MASTER_AT) is either "settled" (sitting in the Got
+// it pile, due in the future) or "up for review" (due date has passed, so it
+// rejoins active study until answered again).
+function isMastered(p) { return !!(p && p.n >= MASTER_AT); }
+function reviewDue(p, now) { return isMastered(p) && p.due <= (now ?? Date.now()); }
+function isSettled(p, now) { return isMastered(p) && p.due > (now ?? Date.now()); }
 
 // ---- Word rotation with spaced scheduling ----
 // A set of ~ROTATION_SIZE distinct WORDS is in play at once. All of a word's
@@ -11373,13 +11406,18 @@ function assignIds(cards) {
   return cards;
 }
 
-function load() {
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
-  if (!saved || !saved.cards) {
-    return { cards: assignIds(buildBuiltIn()), seen: 0, deckVersion: DECK_VERSION,
-             rotation: [], schedVer: 1, ...structuredClone(DEFAULTS) };
-  }
+function freshState() {
+  return { cards: assignIds(buildBuiltIn()), seen: 0, deckVersion: DECK_VERSION,
+           rotation: [], schedVer: 1, ...structuredClone(DEFAULTS) };
+}
+
+// Turn a parsed save object — from localStorage or a restored backup file — into
+// a live state. Anything missing or malformed falls back to a fresh deck. This is
+// the single merge path both load() and Restore go through, so a restored backup
+// picks up newer built-in cards the same way a stale localStorage save does.
+function hydrate(saved) {
+  if (!saved || !saved.cards || !Array.isArray(saved.cards)) return freshState();
+  const now = Date.now();
   const cards = saved.cards.map(c => {
     const card = { hanzi: "", pinyin: "", english: "", prog: {}, ...c };
     // Older saves tracked one box per card. Progress is now per direction, so
@@ -11392,6 +11430,17 @@ function load() {
       const have = FIELDS.filter(f => card[f] && card[f].trim());
       have.forEach(pf => have.filter(f => f !== pf)
         .forEach(af => { card.prog[pairKey(pf, af)] = { n, due }; }));
+    }
+    // Directions mastered before spaced reviews existed carry a stale due date
+    // (~4 days out) that's long past — without this they'd all resurface for
+    // review at once on first load. Give them a review stage and a due date in
+    // the future so the spaced ladder starts cleanly.
+    for (const k in card.prog) {
+      const p = card.prog[k];
+      if (isMastered(p) && p.rev == null) {
+        p.rev = 1;
+        if (!(p.due > now)) p.due = now + REVIEW_DAYS[0] * DAY;
+      }
     }
     delete card.box; delete card.due;
     if (!card.t) card.t = guessKind(card);
@@ -11418,6 +11467,12 @@ function load() {
     cats: Array.isArray(saved.cats) ? saved.cats.filter(c => c in CAT_BIT) : null,
     dirs: loadDirs(saved),
   };
+}
+
+function load() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  return hydrate(saved);
 }
 
 // Directions replaced the old "ask with" / "answer with" pair of toggles. An
@@ -11519,8 +11574,8 @@ function countStats() {
       total++;
       const p = card.prog[pairKey(pf, af)];
       if (!p) fresh++;
-      else if (p.n >= MASTER_AT) mastered++;
-      else if (p.due <= now) due++;
+      else if (isSettled(p, now)) mastered++;
+      else if (p.due <= now) due++;   // learning-due or a graduated review come due
     }
   }
   return { fresh, due, mastered, total };
@@ -11528,13 +11583,15 @@ function countStats() {
 
 // Word-level counts: distinct words in play, plus directions graduated / to go.
 function cardStats() {
+  const now = Date.now();
   let got = 0, pool = 0;
   for (const card of state.cards) {
     if (!cardOk(card)) continue;
     for (const [pf, af] of DIR_LIST) {
       if (!state.dirs[pairKey(pf, af)] || !hasFields(card, pf, af)) continue;
       const p = card.prog[pairKey(pf, af)];
-      if (p && p.n >= MASTER_AT) got++; else pool++;
+      // A direction back for its spaced review is in play again, not "got it".
+      if (isSettled(p, now)) got++; else pool++;
     }
   }
   return { words: state.rotation.length, got, toGo: pool };
@@ -11552,12 +11609,19 @@ function cardById(id) { return state.cards.find(c => c.id === id); }
 function wordDirs(card) {
   return DIR_LIST.filter(([pf, af]) => state.dirs[pairKey(pf, af)] && hasFields(card, pf, af));
 }
-// …of those, the ones not yet graduated — what's still to learn on this word.
+// …of those, the ones in active study right now: still being learned, or
+// mastered but back for a spaced review (their due date has passed).
 function wordPlayableDirs(card) {
+  const now = Date.now();
   return wordDirs(card).filter(([pf, af]) => {
     const p = card.prog[pairKey(pf, af)];
-    return !(p && p.n >= MASTER_AT);
+    return !isMastered(p) || reviewDue(p, now);
   });
+}
+// True if any of the word's directions is a graduated review now come due.
+function wordHasDueReview(card) {
+  const now = Date.now();
+  return wordDirs(card).some(([pf, af]) => reviewDue(card.prog[pairKey(pf, af)], now));
 }
 // A word belongs in the rotation if it passes the filters and still has a
 // direction left to learn.
@@ -11581,7 +11645,12 @@ function refillRotation() {
     const have = new Set(ids);
     const pool = state.cards
       .filter(c => !have.has(c.id) && wordEligible(c))
-      .sort((a, b) => benchOf(a.id) - benchOf(b.id) || a.f - b.f);
+      // Due reviews jump the queue — re-verifying mastery matters more than
+      // starting a brand-new word — then freshest (never-shelved), then commonest.
+      .sort((a, b) =>
+        (wordHasDueReview(b) - wordHasDueReview(a))
+        || benchOf(a.id) - benchOf(b.id)
+        || a.f - b.f);
     for (const c of pool) { ids.push(c.id); if (ids.length >= size) break; }
   }
   state.rotation = ids;
@@ -11695,11 +11764,18 @@ function render() {
     fitZh(promptEl, current[promptField]);
   }
 
-  // Progress of this direction toward graduating to the Got it pile.
-  const g = (peek(current, promptField, targetField) || {}).n || 0;
+  // Progress of this direction toward graduating to the Got it pile — or, if it
+  // has already graduated and come back, that it's a spaced review.
+  const p0 = peek(current, promptField, targetField);
+  const g = (p0 || {}).n || 0;
   const tag = document.getElementById("box-tag");
-  tag.textContent = `${g}/${MASTER_AT}`;
-  tag.classList.toggle("near", g >= MASTER_AT - 1);
+  if (reviewDue(p0)) {
+    tag.textContent = "review";
+    tag.classList.add("near");
+  } else {
+    tag.textContent = `${g}/${MASTER_AT}`;
+    tag.classList.toggle("near", g >= MASTER_AT - 1);
+  }
   document.getElementById("field-tag").textContent = LABEL[promptField];
 
   // The illustration. As a "Picture →" prompt it's the question, shown large and
@@ -11831,13 +11907,29 @@ function reveal() {
 // direction simply comes round again when its word next surfaces.
 function record(ok) {
   const p = progOf(current, promptField, targetField);
-  if (ok) p.n = Math.min(p.n + 1, MASTER_AT);
-  else p.n = 0;
-  p.due = Date.now() + INTERVALS[Math.min(p.n, INTERVALS.length - 1)] * DAY;
+  const now = Date.now();
+  const wasReview = reviewDue(p, now);   // this answer was a spaced review, not learning
+  if (ok) {
+    p.n = Math.min(p.n + 1, MASTER_AT);
+    if (p.n >= MASTER_AT) {
+      // Graduating for the first time, or surviving a spaced review: advance the
+      // review ladder and push the next check out (last interval repeats).
+      p.rev = Math.min((p.rev || 0) + 1, REVIEW_DAYS.length);
+      p.due = now + REVIEW_DAYS[p.rev - 1] * DAY;
+    } else {
+      p.due = now + INTERVALS[Math.min(p.n, INTERVALS.length - 1)] * DAY;
+    }
+  } else {
+    // A miss — including a failed review — drops back into active learning.
+    p.n = 0;
+    p.rev = 0;
+    p.due = now + INTERVALS[0] * DAY;
+  }
 
-  let dir = false, word = false;
-  if (p.n >= MASTER_AT) {
-    dir = true;
+  let dir = false, word = false, review = false;
+  if (p.n >= MASTER_AT && !reviewDue(p, now)) {
+    dir = true;                       // now settled (mastered, next review in the future)
+    review = wasReview;               // distinguish a review pass from a first graduation
     if (wordPlayableDirs(current).length === 0) {
       word = true;
       const id = current.id;
@@ -11848,7 +11940,7 @@ function record(ok) {
   }
   state.seen++;
   save();
-  return { dir, word };
+  return { dir, word, review };
 }
 
 // ---- Study controls: skip and the two reshuffles ----
@@ -11907,6 +11999,8 @@ function submitAnswer() {
   const g = record(result !== "wrong");
   if (g.word) {
     vEl.innerHTML += ` <span class="mastered">· word done <span class="ico">${icon("trophy")}</span> — new word added</span>`;
+  } else if (g.review) {
+    vEl.innerHTML += ` <span class="mastered">· review passed <span class="ico">${icon("trophy")}</span></span>`;
   } else if (g.dir) {
     vEl.innerHTML += ` <span class="mastered">· direction mastered <span class="ico">${icon("trophy")}</span></span>`;
   }
@@ -12163,13 +12257,15 @@ function esc(s) {
 // Directions that have graduated (answered right MASTER_AT times in a row),
 // within the current filters, commonest first. Each direction stands alone.
 function masteredUnits() {
+  const now = Date.now();
   const out = [];
   for (const card of state.cards) {
     if (!cardOk(card)) continue;
     for (const [pf, af] of DIR_LIST) {
       if (!state.dirs[pairKey(pf, af)] || !hasFields(card, pf, af)) continue;
       const p = card.prog[pairKey(pf, af)];
-      if (p && p.n >= MASTER_AT) out.push({ card, pf, af });
+      // Settled only — a direction up for review is back in study, not resting here.
+      if (isSettled(p, now)) out.push({ card, pf, af });
     }
   }
   return out.sort((a, b) => a.card.f - b.card.f);
@@ -12181,7 +12277,7 @@ const PILE_LIMIT = 300;   // the pile can run to thousands; don't render them al
 // the pool and can be drawn into the rotation again.
 function returnToStudy(u) {
   const p = progOf(u.card, u.pf, u.af);
-  p.n = 0; p.due = 0;
+  p.n = 0; p.due = 0; p.rev = 0;
 }
 
 function renderMastered() {
@@ -12189,7 +12285,7 @@ function renderMastered() {
   const rows = all.slice(0, PILE_LIMIT);
   const capped = all.length > rows.length ? ` Showing the first ${PILE_LIMIT}.` : "";
   document.getElementById("mastered-help").textContent = all.length
-    ? `${all.length.toLocaleString()} direction${all.length === 1 ? "" : "s"} answered right ${MASTER_AT} times in a row. They've left the rotation and stopped coming up. Each direction counts on its own — 汉字 → English and English → 汉字 graduate separately.${capped}`
+    ? `${all.length.toLocaleString()} direction${all.length === 1 ? "" : "s"} answered right ${MASTER_AT} times in a row. They've left the rotation, but each resurfaces for a quick spaced review (at ${REVIEW_DAYS.join(", ")} days) to keep it fresh — pass and it settles back here, miss and it returns to study. Each direction counts on its own — 汉字 → English and English → 汉字 graduate separately.${capped}`
     : `Nothing here yet. Get a direction right ${MASTER_AT} times in a row and it graduates here, and a new one joins your rotation.`;
 
   const list = document.getElementById("mastered-list");
@@ -12494,6 +12590,82 @@ document.getElementById("reset").addEventListener("click", () => {
   save();
   buildQueue();
   next();
+});
+
+// ---- Backup: download / restore ----
+function setBackupStatus(msg, cls) {
+  const el = document.getElementById("backup-status");
+  el.textContent = msg;
+  el.className = "status" + (cls ? " " + cls : "");
+}
+
+// Dump the whole state to a dated JSON file. Works from file:// (--app) too:
+// an object-URL blob download doesn't need a server.
+function exportBackup() {
+  try {
+    const blob = new Blob([JSON.stringify(state)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const d = new Date();
+    const stamp = d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "chinese-flashcards-backup-" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setBackupStatus("Backup downloaded.", "ok");
+  } catch (e) {
+    setBackupStatus("Couldn't create the backup (" + e.name + ").", "err");
+  }
+}
+
+// Read a backup file and merge it in through the same hydrate() path load() uses,
+// so a restore also picks up any newer built-in cards. Replaces current progress.
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onerror = () => setBackupStatus("Couldn't read that file.", "err");
+  reader.onload = () => {
+    let parsed;
+    try { parsed = JSON.parse(reader.result); }
+    catch (e) { setBackupStatus("That file isn't valid JSON.", "err"); return; }
+    if (!parsed || !Array.isArray(parsed.cards)) {
+      setBackupStatus("That doesn't look like a flashcards backup.", "err");
+      return;
+    }
+    if (!confirm("Restore this backup? It replaces your current progress and added "
+      + "cards with the backup's (newer built-in cards are kept). Download a backup "
+      + "of what you have now first if you're not sure.")) {
+      setBackupStatus("Restore cancelled.", null);
+      return;
+    }
+    state = hydrate(parsed);
+    // Scheduler bookkeeping is session-scoped and keyed by card id — start it clean.
+    seq = 0; prevWord = null;
+    [shownAt, dirCursor, benched].forEach(m => { for (const k in m) delete m[k]; });
+    applyCats();
+    applyFont();
+    renderSettings();
+    renderCats();
+    save();
+    buildQueue();
+    next();
+    const cs = cardStats();
+    setBackupStatus(`Restored — ${cs.got.toLocaleString()} got it, ${cs.toGo.toLocaleString()} to go.`, "ok");
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("btn-export").addEventListener("click", exportBackup);
+document.getElementById("btn-import-progress").addEventListener("click", () => {
+  document.getElementById("import-file").click();
+});
+document.getElementById("import-file").addEventListener("change", (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (file) importBackup(file);
+  e.target.value = "";   // let the same file be picked again later
 });
 
 // Inline Lucide SVGs into every [data-icon] placeholder (see ICONS + build_icons.py).
